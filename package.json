@@ -1,0 +1,33 @@
+{
+  "name": "capacitor-app",
+  "version": "1.0.0",
+  "description": "An Amazing Capacitor App",
+  "type": "module",
+  "keywords": [
+    "capacitor",
+    "mobile"
+  ],
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "sync": "npm run build && npx cap copy"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/camera": "latest",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/splash-screen": "latest",
+    "@capacitor/status-bar": "^8.0.3",
+    "capacitor-scrollbar-hider": "^1.0.0",
+    "phaser": "^4.2.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "latest",
+    "typescript": "^7.0.2",
+    "vite": "^7.3.6"
+  },
+  "author": "",
+  "license": "ISC"
+}

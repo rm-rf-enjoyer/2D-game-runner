@@ -1,0 +1,20 @@
+{
+  "appId": "com.example.app",
+  "appName": "Runner",
+  "webDir": "dist",
+  "android": {
+    "adjustMarginsForEdgeToEdge": "disable"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "launchShowDuration": 0,
+      "launchFadeOutDuration": 200,
+      "backgroundColor": "#000000"
+    },
+    "SystemBars": {
+      "hidden": true,
+      "style": "DARK"
+    }
+  }
+}

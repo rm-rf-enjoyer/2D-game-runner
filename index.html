@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Runner</title>
+    <meta
+      name="viewport"
+      content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <link rel="icon" href="data:," />
+    <meta name="theme-color" content="#000000" />
+    <style>
+      html, body {
+        overflow: hidden;
+        height: 100%;
+        width: 100%;
+        position: fixed;
+        inset: 0;
+        overscroll-behavior: none;
+        touch-action: none;
+      }
+      #game {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      canvas {
+        display: block;
+        touch-action: none;
+      }
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar,
+      #game::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+          </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
