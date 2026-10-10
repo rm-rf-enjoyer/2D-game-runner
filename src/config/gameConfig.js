@@ -1,7 +1,8 @@
 import { BootScene } from '../scenes/bootScene.js';
 import { PreloadScene } from '../scenes/preloadScene.js';
 import { MenuScene } from '../scenes/menuScene.js';
-import { GameScene } from '../scenes/gameScene.js'
+import { GameScene } from '../scenes/gameScene.js';
+import { UIScene } from '../scenes/UIScene.js';
 import Phaser from 'phaser';
 
 export const GAME_WIDTH = 2400;
@@ -24,11 +25,11 @@ export const gameConfig = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: 1800 },
+      gravity: { y: 2700 },
       debug: false,
     },
   },
-  scene: [BootScene, PreloadScene, MenuScene, GameScene],
+  scene: [BootScene, PreloadScene, MenuScene, GameScene, UIScene],
 };
 
 

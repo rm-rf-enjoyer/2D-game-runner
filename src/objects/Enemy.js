@@ -12,10 +12,10 @@ export class Enemy {
     this.sprite = scene.physics.add.sprite(x, y, 'enemy-walk');
     this.sprite.setDepth(4);
 
-    this.sprite.setFlipX(false);   // отразить по горизонтали
+    this.sprite.setFlipX(false);
 
     if (type === 'tall') {
-      this.sprite.setScale(6);   // выше
+      this.sprite.setScale(6);
       this.sprite.body.setSize(16, 64);   // хитбокс выше
       this.sprite.body.setOffset(7, 0);
     } else {
@@ -29,7 +29,7 @@ export class Enemy {
     this.sprite.body.setImmovable(true);
 
     this.sprite.setVelocityX(-speed);
-    this.sprite.play('animKey');
+    this.sprite.play(animKey);
 
     this.isDead = false;
 

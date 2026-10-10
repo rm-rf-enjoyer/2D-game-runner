@@ -7,8 +7,10 @@ export class ParallaxBackground {
       { key: 'bg1', speed: 0.05 },
       { key: 'bg2', speed: 0.10 },
       { key: 'bg3', speed: 0.20 },
-      { key: 'bg4', speed: 0.35 },
-      { key: 'bg5', speed: 0.60 },
+      { key: 'bg4', speed: 1 },
+      { key: 'bg5', speed: 0.35 },
+      { key: 'bg6', speed: 0.35 },
+      { key: 'bg7', speed: 0.60 },
     ].map(({ key, speed }) => {
       const a = this._makeSprite(scene, key);
       const b = this._makeSprite(scene, key);

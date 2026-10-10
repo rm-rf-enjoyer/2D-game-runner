@@ -23,7 +23,8 @@ export class EnemySpawner {
     const gap = Phaser.Math.Between(this.minGap, this.maxGap);
 
     // время в ms = расстояние / скорость * 1000
-    const delayMs = (gap / this.speed) * 1000;
+    let delayMs = (gap / this.speed) * 1000;
+    delayMs = Math.max(delayMs, 1000);
 
     this.nextSpawnAt = now + delayMs;
   }
@@ -42,6 +43,7 @@ export class EnemySpawner {
     const enemy = new Enemy(this.scene, x, y, this.speed, type);
     this.enemies.push(enemy);
   } 
+  
   update(time) {
     if (time >= this.nextSpawnAt) {
       this._spawn();
@@ -54,6 +56,10 @@ export class EnemySpawner {
         e.destroy();
         this.enemies.splice(i, 1);
       }
+    }
+
+    for (const e of this.enemies) {
+      e.sprite.setVelocityX(-this.speed);
     }
   }
 }

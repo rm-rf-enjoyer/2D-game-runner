@@ -4,11 +4,14 @@ import menuMusic from '../assets/audio/menu.mp3'
 import menuGame from '../assets/audio/game_theme.mp3'
 
 //Фон
-import bg1 from '../assets/bg/city5.png';
-import bg2 from '../assets/bg/city4.png';
+import bg1 from '../assets/bg/city1.png';
+import bg2 from '../assets/bg/city2.png';
 import bg3 from '../assets/bg/city3.png';
-import bg4 from '../assets/bg/city2.png';
-import bg5 from '../assets/bg/city1.png';
+import bg4 from '../assets/bg/city4.png';
+import bg5 from '../assets/bg/city5.png';
+import bg6 from '../assets/bg/city6.png';
+import bg7 from '../assets/bg/city7.png';
+
 
 //UI меню
 import menu1 from '../assets/ui/menu/1.png'
@@ -34,7 +37,7 @@ import groundTopPng from '../assets/tiles/Tile_02.png';
 import groundBottomPng from '../assets/tiles/Tile_12.png';
 
 //Герой
-import runPng from '../assets/player/Running.png';
+import runPng from '../assets/player/player-run.png';
 //import jumpUpPng from '../assets/player/Jumping.png';
 //import jumpDownPng from '../assets/player/Jumping.png';
 
@@ -54,6 +57,9 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('bg3', bg3);
     this.load.image('bg4', bg4);
     this.load.image('bg5', bg5);
+    this.load.image('bg6', bg6);
+    this.load.image('bg7', bg7);
+
 
     this.load.image('menu-1', menu1);
     this.load.image('menu-2', menu2);
@@ -100,8 +106,8 @@ export class PreloadScene extends Phaser.Scene {
     });
 
     this.load.spritesheet('enemy-tall', enemyWalkPng, {
-      frameWidth: 48,
-      frameHeight: 48,
+      frameWidth: 32,
+      frameHeight: 32,
     });
 
   }
@@ -110,7 +116,7 @@ export class PreloadScene extends Phaser.Scene {
     this.anims.create({
       key: 'run',
       frames: this.anims.generateFrameNumbers('player-run', { start: 0, end: 7 }),
-      frameRate: 10,
+      frameRate: 15,
       repeat: -1,
     });
 
@@ -130,14 +136,14 @@ export class PreloadScene extends Phaser.Scene {
 
     this.anims.create({
       key: 'enemy-walk',
-      frames: this.anims.generateFrameNumbers('enemy-walk', { start: 0, end: 0 }),
+      frames: this.anims.generateFrameNumbers('enemy-walk', { start: 0, end: 1 }),
       frameRate: 10,
       repeat: -1,
     });
 
     this.anims.create({
       key: 'enemy-tall-walk',
-      frames: this.anims.generateFrameNumbers('enemy-walk', { start: 0, end: 0 }),
+      frames: this.anims.generateFrameNumbers('enemy-walk', { start: 0, end: 1 }),
       frameRate: 10,
       repeat: -1,
     });

@@ -15,7 +15,7 @@ export class Player {
     this.sprite.play('run');
 
     this.isJumping = false;
-    this.jumpVelocity = -1100;
+    this.jumpVelocity = -1300;
   }
 
   jump() {
@@ -36,8 +36,9 @@ export class Player {
   update() {
     const body = this.sprite.body;
     const onGround = body.onFloor() || body.touching.down || body.blocked.down;
+    const goingUp = body.velocity.y < 0;
 
-    if (onGround && this.isJumping) {
+    if (onGround && this.isJumping && !goingUp) {
       this.onLand();
       return;
     }
