@@ -4,7 +4,7 @@ import { GAME_WIDTH } from '../config/gameConfig.js';
 
 export class EnemySpawner {
   constructor(scene, groundTopY, {
-    minGap = 800,       // минимум «метров» между врагами
+    minGap = 900,       // минимум «метров» между врагами
     maxGap = 1800,       // максимум
     speed = 500,     // фиксированная скорость (или диапазон)
   } = {}) {
@@ -60,6 +60,16 @@ export class EnemySpawner {
 
     for (const e of this.enemies) {
       e.sprite.setVelocityX(-this.speed);
+    }
+  }
+  burst(distance, duration) {
+    for (const enemy of this.enemies) {
+      this.scene.tweens.add({
+        targets: enemy.sprite,
+        x: enemy.sprite.x - distance,
+        duration: duration,
+        ease: 'Linear',
+      });
     }
   }
 }

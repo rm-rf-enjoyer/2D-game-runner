@@ -11,14 +11,8 @@ export class UIScene extends Phaser.Scene {
   }
 
   create() {
-    this.pauseBtn = this.add.text(GAME_WIDTH - 60, 40, '||', {
-      fontFamily: 'Arial',
-      fontSize: '64px',
-      color: '#ffffff',
-      stroke: '#000000',
-      strokeThickness: 6,
-    })
-    .setOrigin(0.5)
+    this.pauseBtn = this.add.image(GAME_WIDTH - 68, 68, 'btn-pause')
+    .setScale(6)                  
     .setDepth(100)
     .setInteractive({ useHandCursor: true });
 

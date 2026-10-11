@@ -3,7 +3,7 @@ import { Ground } from '../objects/ground.js';
 import { ParallaxBackground } from '../objects/parallaxBackground.js';
 import { GAME_WIDTH, GAME_HEIGHT, MUSIC_VOLUME } from '../config/gameConfig.js';
 import { Player } from '../objects/player.js';
-import { EnemySpawner } from '../systems/enemySpawner.js';
+// import { EnemySpawner } from '../systems/enemySpawner.js';   // временно выключено
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -11,46 +11,45 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    const TOP_HEIGHT = 32;
-    const BOTTOM_HEIGHT = 96;
-    const TOTAL_GROUND_HEIGHT = TOP_HEIGHT + BOTTOM_HEIGHT;
+    const TOTAL_GROUND_HEIGHT = 96;
 
     this.isDead = false;
-    this.score = 0;
-    this.startTime = this.time.now;
+    this.distance = 0;
+    this.PIXELS_PER_METER = 96;
+    this.elapsed = 0;
 
-    this.ground = new Ground(this, TOP_HEIGHT, BOTTOM_HEIGHT);
+    // ЗЕМЛЯ
+    this.ground = new Ground(this);
 
-    const PLATFORM_THICKNESS = 128;
-    this.groundBody = this.physics.add.staticImage(
-      GAME_WIDTH / 2,
-      GAME_HEIGHT - TOTAL_GROUND_HEIGHT + PLATFORM_THICKNESS / 2,
-      'ground-top'
-    );
-    this.groundBody.setDisplaySize(GAME_WIDTH, PLATFORM_THICKNESS);
-    this.groundBody.refreshBody();
-    this.groundBody.setVisible(false);
-
+    // ИГРОК
     const playerSpriteHeight = 192;
     this.player = new Player(
       this,
       300,
-      GAME_HEIGHT - TOTAL_GROUND_HEIGHT - playerSpriteHeight / 2
+      GAME_HEIGHT - TOTAL_GROUND_HEIGHT - playerSpriteHeight / 2,
+      this.ground.speed
     );
 
-    const groundTopY = GAME_HEIGHT - TOTAL_GROUND_HEIGHT;
-    this.spawner = new EnemySpawner(this, groundTopY);
+    // КОЛЛИЗИЯ — после player
+    this.physics.add.collider(this.player.sprite, this.ground.platforms);
 
-    this.physics.add.collider(this.player.sprite, this.groundBody);
-
-    this.input.on('pointerdown', () => this.player.jump());
+    // УПРАВЛЕНИЕ
+    this.input.on('pointerdown', (pointer) => {
+      if (pointer.x < GAME_WIDTH / 2) {
+        this.player.jump();
+      } else {
+        this.player.dash();
+      }
+    });
     this.input.keyboard.on('keydown-SPACE', () => this.player.jump());
 
+    // ФОН
     this.bg = new ParallaxBackground(this);
     this.bg.layers.forEach(l =>
       l.sprites.forEach(s => s.setDepth(-10))
     );
 
+    // МУЗЫКА
     const menuMusic = this.sound.get('music-menu');
     if (menuMusic && menuMusic.isPlaying) menuMusic.stop();
 
@@ -60,50 +59,53 @@ export class GameScene extends Phaser.Scene {
     });
     this.music.play();
 
-    // счёт
-    this.scoreText = this.add.text(20, 20, '0', {
-      fontFamily: 'Arial',
-      fontSize: '48px',
-      color: '#ffffff',
-      stroke: '#000000',
-      strokeThickness: 6,
-    })
-    .setScrollFactor(0)
-    .setDepth(100);
-
-    // пауза
+    // СЧЁТ
+    this.scoreText = this.add.bitmapText(20, 20, 'pixel-font', '0 M', 42)
+      .setTint(0xffcc00)
+      .setDepth(100);
+    // ПАУЗА
     this.scene.launch('UIScene');
+
+    // РЫВОК
+    this.events.on('dash', (duration, speed) => {
+      const distance = (speed * duration) / 1000;
+      this.ground.burst(distance, duration);
+      this.bg.burst(distance, duration);
+      // this.spawner.burst(distance);
+    });
   }
 
   update(time, delta) {
     this.ground.update(delta);
     this.bg.update(delta);
     this.player.update();
-    this.spawner.update(time);
+    if (this.isDead) return;
 
-    const elapsed = (time - this.startTime) / 1000;
-    this.spawner.speed = Math.min(500 + elapsed * 45, 12000);
+    // падение в дыру
+    const groundTopY = GAME_HEIGHT - 96;
+    const playerBottomY = this.player.sprite.y + 96;
 
-    this.score += delta / 1000;
-    this.scoreText.setText(Math.floor(this.score));
-
-    if (!this.isDead) {
-      for (const e of this.spawner.enemies) {
-        if (this.physics.overlap(this.player.sprite, e.sprite)) {
-          this._onHit();
-          break;
-        }
-      }
+    if (playerBottomY > groundTopY + 1) {
+      this.isDead = true;
+      this.finalDistance = this.distance;
+      this._onHit();
+      return;
     }
+
+    this.distance += (this.ground.currentSpeed * delta / 1000) / this.PIXELS_PER_METER;
+    this.scoreText.setText(Math.floor(this.distance) + ' m');
   }
 
   _onHit() {
-    if (this.isDead) return;
-    this.isDead = true;
+    if (this.isDead) {}
+
+    this.input.removeAllListeners('pointerdown');
+    this.input.keyboard.removeAllListeners('keydown-SPACE');
 
     this.music.stop();
-    this.physics.pause();
     this.player.sprite.setTint(0xff0000);
+
+    this.scoreText.setText(Math.floor(this.finalDistance) + ' m');
 
     this.time.delayedCall(1500, () => {
       this.physics.resume();

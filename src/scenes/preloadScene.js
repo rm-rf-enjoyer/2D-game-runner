@@ -23,6 +23,9 @@ import menu6 from '../assets/ui/menu/6.png'
 import menu7 from '../assets/ui/menu/7.png'
 import menu8 from '../assets/ui/menu/8.png'
 import menu9 from '../assets/ui/menu/9.png'
+import pausePng from '../assets/ui/pause/pause.png';
+import fontPng from '../assets/ui/font/font-white.png';
+
 
 //UI кнопки
 import btnNormalLeft from '../assets/ui/buttons/1.png';
@@ -33,13 +36,14 @@ import btnPressedCenter from '../assets/ui/buttons/5.png';
 import btnPressedRight from '../assets/ui/buttons/6.png';
 
 //Земля
-import groundTopPng from '../assets/tiles/Tile_02.png';
-import groundBottomPng from '../assets/tiles/Tile_12.png';
+//import groundTopPng from '../assets/tiles/Tile_02.png';
+import groundPng from '../assets/tiles/Tile_12.png';
 
 //Герой
 import runPng from '../assets/player/player-run.png';
 //import jumpUpPng from '../assets/player/Jumping.png';
 //import jumpDownPng from '../assets/player/Jumping.png';
+import trailPng from '../assets/player/player-trail.png';
 
 //Враг
 import enemyWalkPng from '../assets/enemy/cyberzombie.png';
@@ -70,6 +74,8 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('menu-7', menu7);
     this.load.image('menu-8', menu8);
     this.load.image('menu-9', menu9);
+    this.load.image('btn-pause', pausePng);
+    this.load.image('pixel-font', fontPng);
 
 
     this.load.image('btn-normal-left', btnNormalLeft);
@@ -82,10 +88,15 @@ export class PreloadScene extends Phaser.Scene {
     this.load.audio('music-menu', menuMusic);
     this.load.audio('music-game', menuGame);
 
-    this.load.image('ground-top', groundTopPng);
-    this.load.image('ground-bottom', groundBottomPng);
+    //this.load.image('ground-top', groundTopPng);
+    this.load.image('ground', groundPng);
 
     this.load.spritesheet('player-run', runPng, {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
+
+    this.load.spritesheet('player-trail', trailPng, {
       frameWidth: 32,
       frameHeight: 32,
     });
@@ -122,15 +133,15 @@ export class PreloadScene extends Phaser.Scene {
 
     this.anims.create({
       key: 'jump-up',
-      frames: this.anims.generateFrameNumbers('player-jump-up', { start: 0, end: 3 }),
-      frameRate: 20,
+      frames: this.anims.generateFrameNumbers('player-jump-up', { start: 3, end: 4 }),
+      frameRate: 15,
       repeat: 0,              // проиграть один раз и остановиться на последнем кадре
     });
 
     this.anims.create({
       key: 'jump-down',
-      frames: this.anims.generateFrameNumbers('player-jump-down', { start: 3, end: 7 }),
-      frameRate: 20,
+      frames: this.anims.generateFrameNumbers('player-jump-down', { start: 6, end: 7 }),
+      frameRate: 15,
       repeat: 0,              // проиграть один раз и остановиться на последнем кадре
     });
 
@@ -149,7 +160,28 @@ export class PreloadScene extends Phaser.Scene {
     });
 
     console.log('enemy-walk frames:', this.textures.get('enemy-walk').frameTotal);
-console.log('enemy-walk anim exists:', this.anims.exists('enemy-walk'));
+    console.log('enemy-walk anim exists:', this.anims.exists('enemy-walk'));
+
+    const FONT_CHARS =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
+      '0123456789' +
+      '.:,+-=;\'#|\\/()[]{}!<>?÷%×−' +
+      ' ';
+
+    const config = {
+      image: 'pixel-font',
+      width: 14,
+      height: 14,
+      chars: FONT_CHARS,
+      charsPerRow: 63,
+      spacing: { x: 0, y: 0 },
+      lineSpacing: 0,
+    };
+
+    this.cache.bitmapFont.add(
+      'pixel-font',
+      Phaser.GameObjects.RetroFont.Parse(this, config)
+    );
 
     this.scene.start('MenuScene');
   }
