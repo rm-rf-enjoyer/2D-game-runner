@@ -5,8 +5,9 @@ import { GameScene } from '../scenes/gameScene.js';
 import { UIScene } from '../scenes/UIScene.js';
 import Phaser from 'phaser';
 
-export const GAME_WIDTH = 2400;
-export const GAME_HEIGHT = 1080;
+// ТЕПЕРЬ ЭТО СОВПАДАЕТ С НАСТРОЙКАМИ КАМЕРЫ
+export const GAME_WIDTH = 480;
+export const GAME_HEIGHT = 270;
 export const MUSIC_VOLUME = 0.5;
 
 export const gameConfig = {
@@ -17,7 +18,7 @@ export const gameConfig = {
   antialias: false,
   roundPixels: true,
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.HEIGHT_CONTROLS_WIDTH,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
@@ -25,12 +26,9 @@ export const gameConfig = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: 2700 },
+      gravity: { y: 1000 },
       debug: false,
     },
   },
   scene: [BootScene, PreloadScene, MenuScene, GameScene, UIScene],
 };
-
-
-
