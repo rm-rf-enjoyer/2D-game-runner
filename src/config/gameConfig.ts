@@ -5,7 +5,6 @@ import { GameScene } from '../scenes/gameScene.js';
 import { UIScene } from '../scenes/UIScene.js';
 import Phaser from 'phaser';
 
-// ТЕПЕРЬ ЭТО СОВПАДАЕТ С НАСТРОЙКАМИ КАМЕРЫ
 export const GAME_WIDTH = 480;
 export const GAME_HEIGHT = 270;
 export const MUSIC_VOLUME = 0.5;

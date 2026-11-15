@@ -13,7 +13,7 @@ export class GameScene extends Phaser.Scene {
   create() {
     this.isDead = false;
     this.distance = 0;
-    this.PIXELS_PER_METER = 12;
+    this.PIXELS_PER_METER = 10;
 
     this.world = new WorldManager(this);
     this.phase = 1;
