@@ -11,11 +11,8 @@ export interface ParticleConfig {
 }
 
 export const PLAYER_CONFIG = {
-  groundSpeed: 200,
   jumpVelocity: -270,
-  dashDuration: 200,
-  dashSpeed: 250,
-  dashCooldown: 500,
+  dashDuration: 450,     // Длительность дэша теперь ровно 1 секунда (под затухание мира)
   maxVelocityX: 300,
   maxVelocityY: 400,
   bodySize: { width: 14, height: 24 },
@@ -52,8 +49,8 @@ export const DUST_PARTICLE_CONFIG: ParticleConfig = {
 };
 
 export const AFTERIMAGE_CONFIG = {
-  delay: 30,
-  lifespan: 150,
+  delay: 10,              // Спавним полосу каждые 50мс
+  lifespan: 150,          // Живет 300мс
   shiftX: -40,
   tint: 0x4FE8F4,
 };

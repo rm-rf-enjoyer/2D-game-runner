@@ -4,32 +4,41 @@ import {
   EXHAUST_PARTICLE_CONFIG,
   DASH_PARTICLE_CONFIG,
   DUST_PARTICLE_CONFIG,
-  AFTERIMAGE_CONFIG,
   DeathCause
 } from '../config/playerConfig';
 
+interface TrailPoint {
+  x: number;
+  y: number;
+}
+
 export class Player {
+  private static readonly MOTOR_OFFSET_X = -8;
+  private static readonly MOTOR_OFFSET_Y = 8;
+  private static readonly MAX_TRAIL_POINTS = 40;
+  private static readonly TRAIL_COLOR = 0x4FE8F4;
+  private static readonly MIN_TRAIL_X = -150;
+  private static readonly TRAIL_DELAY = 15;
+
   public sprite: Phaser.Physics.Arcade.Sprite;
   public isDead: boolean = false;
   
   private scene: Phaser.Scene;
   private baseX: number;
   private baseY: number;
-  private groundSpeed: number;
-
   private isJumping: boolean = false;
   private justJumped: boolean = false;
-  
   private isDashing: boolean = false;
-  private dashStartedAt: number = -Infinity;
 
   private hoverState: number = 0;
   private hoverTimer: Phaser.Time.TimerEvent;
   private exhaust: Phaser.GameObjects.Particles.ParticleEmitter;
+  
+  private trailPoints: TrailPoint[] = [];
+  private trailGraphics?: Phaser.GameObjects.Graphics;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, groundSpeed: number = PLAYER_CONFIG.groundSpeed) {
+  constructor(scene: Phaser.Scene, x: number, y: number, speed: number) {
     this.scene = scene;
-    this.groundSpeed = groundSpeed;
     this.baseX = x;
     this.baseY = y;
 
@@ -37,10 +46,11 @@ export class Player {
     this.setupPhysics();
     this.exhaust = this.createExhaust();
     this.hoverTimer = this.setupHoverTimer();
+    this.trailGraphics = this.scene.add.graphics().setDepth(7);
   }
 
   public jump(): void {
-    if (this.isJumping || this.isDashing || !this.isOnGround()) return;
+    if (this.isJumping || !this.isOnGround()) return;
 
     this.resetHoverAndPosition();
     this.sprite.setVelocityY(PLAYER_CONFIG.jumpVelocity);
@@ -48,21 +58,21 @@ export class Player {
     this.isJumping = true;
     this.justJumped = true;
 
-    this.playSound('sfx-dash', { volume: 0.3, rate: 1.5 });
+    this.scene.sound.play('sfx-dash', { volume: 0.3, rate: 1.5 });
     this.sprite.setTexture('player-jump');
     this.sprite.play('jump-anim');
   }
 
   public dash(): void {
-    if (this.isDashing || !this.canDash()) return;
+    if (this.isDashing) return;
 
-    this.startDashMode();
-    this.scene.events.emit('dash', PLAYER_CONFIG.dashDuration, PLAYER_CONFIG.dashSpeed);
+    this.isDashing = true;
+    this.scene.sound.play('sfx-dash', { volume: 1, rate: 1.0 });
+    this.exhaust.setConfig(DASH_PARTICLE_CONFIG);
 
-    const trailTimer = this.createAfterimageTrail();
-
+    const timer = this.createTrailTimer();
     this.scene.time.delayedCall(PLAYER_CONFIG.dashDuration, () => {
-      this.endDashMode(trailTimer);
+      this.endDash(timer);
     });
   }
 
@@ -84,7 +94,8 @@ export class Player {
     this.hoverTimer?.remove();
     this.exhaust?.stop();
     this.sprite.body.enable = false; 
-
+    
+    this.clearTrail();
     this.sprite.play('death-anim');
 
     if (cause === 'pit' || cause === 'wall') {
@@ -92,8 +103,10 @@ export class Player {
     }
   }
 
-  public update(): void {
-    if (this.isDashing) return;
+  public update(delta: number): void {
+    const worldSpeed = (this.scene as any).world?.speed || 130;
+    this.updateTrail(worldSpeed * (delta / 1000));
+    this.renderTrail();
 
     if (this.justJumped) {
       this.justJumped = false;
@@ -105,14 +118,17 @@ export class Player {
     }
   }
 
-  // --- PRIVATE HELPER METHODS (Single Responsibility) ---
-
   private setupPhysics(): void {
     this.sprite.setScale(1);
     this.sprite.setDepth(5);
-    this.sprite.body.setSize(PLAYER_CONFIG.bodySize.width, PLAYER_CONFIG.bodySize.height);
-    this.sprite.body.setOffset(PLAYER_CONFIG.bodyOffset.x, PLAYER_CONFIG.bodyOffset.y);
-    this.sprite.setMaxVelocity(PLAYER_CONFIG.maxVelocityX, PLAYER_CONFIG.maxVelocityY);
+    const { width, height } = PLAYER_CONFIG.bodySize;
+    const { x, y } = PLAYER_CONFIG.bodyOffset;
+    this.sprite.body.setSize(width, height);
+    this.sprite.body.setOffset(x, y);
+    this.sprite.setMaxVelocity(
+      PLAYER_CONFIG.maxVelocityX, 
+      PLAYER_CONFIG.maxVelocityY
+    );
   }
 
   private isOnGround(): boolean {
@@ -120,19 +136,12 @@ export class Player {
     return body.blocked.down || body.touching.down;
   }
 
-  private canDash(): boolean {
-    return this.scene.time.now - this.dashStartedAt >= PLAYER_CONFIG.dashCooldown;
-  }
-
   private resetHoverAndPosition(): void {
     this.sprite.x = this.baseX;
     this.sprite.y = Math.round(this.sprite.y);
-    this.sprite.body.setOffset(PLAYER_CONFIG.bodyOffset.x, PLAYER_CONFIG.bodyOffset.y);
+    const { x, y } = PLAYER_CONFIG.bodyOffset;
+    this.sprite.body.setOffset(x, y);
     this.hoverState = 0;
-  }
-
-  private playSound(key: string, config?: Phaser.Types.Sound.SoundConfig): void {
-    this.scene.sound.play(key, config);
   }
 
   private setupHoverTimer(): Phaser.Time.TimerEvent {
@@ -147,15 +156,16 @@ export class Player {
   }
 
   private processHoverStep(): void {
-    switch (this.hoverState) {
-      case 0: this.sprite.y -= 1; this.sprite.body.setOffset(5, 1); break;
-      case 1: this.sprite.y += 1; this.sprite.body.setOffset(5, 0); break;
-      case 2: this.sprite.x += 1; break;
-      case 3: this.sprite.x -= 1; break;
-      case 4: this.sprite.x -= 1; break;
-      case 5: this.sprite.x += 1; break;
-    }
-    this.hoverState = (this.hoverState + 1) % 6;
+    const steps = [
+      () => { this.sprite.y -= 1; this.sprite.body.setOffset(5, 1); },
+      () => { this.sprite.y += 1; this.sprite.body.setOffset(5, 0); },
+      () => { this.sprite.x += 1; },
+      () => { this.sprite.x -= 1; },
+      () => { this.sprite.x -= 1; },
+      () => { this.sprite.x += 1; }
+    ];
+    steps[this.hoverState]();
+    this.hoverState = (this.hoverState + 1) % steps.length;
   }
 
   private createExhaust(): Phaser.GameObjects.Particles.ParticleEmitter {
@@ -168,67 +178,72 @@ export class Player {
   }
 
   private createDust(): void {
-    const dust = this.scene.add.particles(this.sprite.x, this.sprite.y + 12, 'pixel-particle', {
-      ...DUST_PARTICLE_CONFIG,
-      emitting: false,
-      roundPixels: true
-    }).setDepth(4);
+    const dust = this.scene.add.particles(
+      this.sprite.x, 
+      this.sprite.y + 12, 
+      'pixel-particle', 
+      { ...DUST_PARTICLE_CONFIG, emitting: false, roundPixels: true }
+    ).setDepth(4);
     
     dust.explode(DUST_PARTICLE_CONFIG.quantity);
     this.scene.time.delayedCall(500, () => dust.destroy());
   }
 
-  private startDashMode(): void {
-    this.isDashing = true;
-    this.dashStartedAt = this.scene.time.now;
-    
-    this.playSound('sfx-dash', { volume: 1, rate: 1.0 });
-    this.sprite.anims.stop();
-    this.sprite.setTexture('player');
-
-    if (this.isOnGround()) {
-      this.sprite.y = Math.round(this.sprite.y);
-    }
-    
-    this.resetHoverAndPosition();
-    this.sprite.body.setAllowGravity(false);
-    this.sprite.setVelocityY(0);
-
-    this.exhaust.setConfig(DASH_PARTICLE_CONFIG);
-  }
-
-  private endDashMode(trailTimer: Phaser.Time.TimerEvent): void {
+  private endDash(timer: Phaser.Time.TimerEvent): void {
     this.isDashing = false;
-    this.sprite.body.setAllowGravity(true);
-    
     this.exhaust.setConfig(EXHAUST_PARTICLE_CONFIG);
-    trailTimer.remove(); 
+    timer.remove(); 
+    this.clearTrail();
+  }
 
-    if (this.isOnGround()) {
-      this.isJumping = false;
+  private createTrailTimer(): Phaser.Time.TimerEvent {
+    return this.scene.time.addEvent({
+      delay: Player.TRAIL_DELAY,
+      loop: true,
+      callback: () => this.spawnTrailPoint()
+    });
+  }
+
+  private spawnTrailPoint(): void {
+    const x = this.sprite.x + Player.MOTOR_OFFSET_X;
+    const y = this.sprite.y + Player.MOTOR_OFFSET_Y;
+
+    this.trailPoints.unshift({ x, y });
+    if (this.trailPoints.length > Player.MAX_TRAIL_POINTS) {
+      this.trailPoints.pop();
     }
   }
 
-  private createAfterimageTrail(): Phaser.Time.TimerEvent {
-    return this.scene.time.addEvent({
-      delay: AFTERIMAGE_CONFIG.delay,
-      loop: true,
-      callback: () => this.spawnAfterimage()
-    });
+  private updateTrail(deltaMove: number): void {
+    for (let i = this.trailPoints.length - 1; i >= 0; i--) {
+      this.trailPoints[i].x -= deltaMove;
+      if (this.trailPoints[i].x < Player.MIN_TRAIL_X) {
+        this.trailPoints.splice(i, 1);
+      }
+    }
   }
 
-  private spawnAfterimage(): void {
-    const ghost = this.scene.add.image(this.sprite.x, this.sprite.y, 'player');
-    ghost.setTintFill(AFTERIMAGE_CONFIG.tint); 
-    ghost.setDepth(4); 
-    ghost.setFlipX(this.sprite.flipX);
+  private renderTrail(): void {
+    if (!this.trailGraphics) return;
+    this.trailGraphics.clear();
+    if (this.trailPoints.length < 2) return;
 
-    this.scene.tweens.add({
-      targets: ghost,
-      x: ghost.x + AFTERIMAGE_CONFIG.shiftX, 
-      duration: AFTERIMAGE_CONFIG.lifespan,
-      onComplete: () => ghost.destroy()
-    });
+    for (let i = 0; i < this.trailPoints.length - 1; i++) {
+      const p1 = this.trailPoints[i];
+      const p2 = this.trailPoints[i + 1];
+      const thickness = Math.max(1, 5 * (1 - i / this.trailPoints.length));
+
+      this.trailGraphics.lineStyle(thickness, Player.TRAIL_COLOR, 1.0);
+      this.trailGraphics.beginPath();
+      this.trailGraphics.moveTo(p1.x, p1.y);
+      this.trailGraphics.lineTo(p2.x, p2.y);
+      this.trailGraphics.strokePath();
+    }
+  }
+
+  private clearTrail(): void {
+    this.trailPoints = [];
+    this.trailGraphics?.clear();
   }
 
   private playDeathFallTween(): void {

@@ -58,7 +58,7 @@ export class GameScene extends Phaser.Scene {
 
     const currentSpeed = this._getCurrentSpeed();
 
-    this._updateEntities(delta, currentSpeed);
+    this._updateEntities(delta);
     this._handleCollisions();
     this._handlePitFall();
     
@@ -93,10 +93,22 @@ export class GameScene extends Phaser.Scene {
 
   private _setupInput(): void {
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.x < GAME_WIDTH / 2) this.player.jump();
-      else this.player.dash();
+      if (pointer.x < GAME_WIDTH / 2) {
+        this.player.jump();
+      } else {
+        // Пробуем ускорить мир. Если кулдаун прошел — запускаем дэш и у игрока!
+        if (this.world.triggerDash()) {
+          this.player.dash();
+        }
+      }
     });
+
     this.input.keyboard?.on('keydown-SPACE', () => this.player.jump());
+    this.input.keyboard?.on('keydown-SHIFT', () => {
+      if (this.world.triggerDash()) {
+        this.player.dash();
+      }
+    });
   }
 
   private _setupBackgrounds(): void {
@@ -120,12 +132,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   private _setupEvents(): void {
-    this.events.on('dash', (duration: number, speed: number) => {
-      const distance = (speed * duration) / 1000;
-      this.world.burst(distance, duration);
-      this.bg.burst(distance, duration);
-    });
-
     this.game.events.on('app-paused', this._onAppPaused, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off('app-paused', this._onAppPaused, this);
@@ -135,14 +141,14 @@ export class GameScene extends Phaser.Scene {
   // --- UPDATE LOGIC ---
 
   private _getCurrentSpeed(): number {
-    return this.world.speed + (this.world.burstRemaining > 0 ? this.world.burstPerSecond : 0);
+    return this.world.speed;
   }
 
-  private _updateEntities(delta: number, currentSpeed: number): void {
+  private _updateEntities(delta: number): void {
     this.world.update(delta);
     this.bg.update(delta, this.world.speed);
-    this.fg.update(delta, currentSpeed);
-    this.player.update();
+    this.fg.update(delta, this.world.speed);
+    this.player.update(delta);
   }
 
   private _handleCollisions(): void {
@@ -213,6 +219,7 @@ export class GameScene extends Phaser.Scene {
     this.sound.play('sfx-death', { volume: 0.6 });
     this.input.removeAllListeners('pointerdown');
     this.input.keyboard?.removeAllListeners('keydown-SPACE');
+    this.input.keyboard?.removeAllListeners('keydown-SHIFT');
     this.music.stop();
   }
 
