@@ -41,18 +41,7 @@ import btnPressedCenter from '../assets/ui/buttons/5.png';
 import btnPressedRight from '../assets/ui/buttons/6.png';
 
 //Платформы
-import topGroundTile1Png from '../assets/tiles/tile-ground-top1.png';
-import topGroundTile2Png from '../assets/tiles/tile-ground-top2.png';
-import topGroundTile3Png from '../assets/tiles/tile-ground-top3.png';
-import bottomGroundTilesPng from '../assets/tiles/tile-ground-bottom.png';
 import pipePlatformTilesPng from '../assets/tiles/pipe-platform.png';
-
-//Препятствия
-import carPng from '../assets/tiles/obstacle-car-parked.png';
-import trashPng from '../assets/tiles/obstacle-trash.png';
-import vending1Png from '../assets/tiles/obstacle-vending1.png';
-import vending2Png from '../assets/tiles/obstacle-vending2.png';
-import obstacleTilePng from '../assets/tiles/obstacleTile.png';
 
 //Герой
 import runPng from '../assets/player/player.png'; // Загружаем одну картинку
@@ -110,20 +99,10 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private _loadTilesAndObstacles(): void {
-    const tiles = {
-      'top-ground-tile1': topGroundTile1Png,
-      'top-ground-tile2': topGroundTile2Png,
-      'top-ground-tile3': topGroundTile3Png,
-      'vending1': vending1Png,
-      'vending2': vending2Png,
-      'trash': trashPng,
-      'car': carPng,
-      'obstacle-tile': obstacleTilePng,
-    };
-    this._loadImages(tiles);
-
-    this.load.spritesheet('bottom-ground-tiles', bottomGroundTilesPng, { frameWidth: 16, frameHeight: 16 });
-    this.load.spritesheet('pipe-platform-tiles', pipePlatformTilesPng, { frameWidth: 16, frameHeight: 16 });
+    this.load.spritesheet('pipe-platform', pipePlatformTilesPng, { 
+      frameWidth: 16, 
+      frameHeight: 16 
+    });
   }
 
   private _loadPlayer(): void {

@@ -1,8 +1,3 @@
-import { BootScene } from '../scenes/bootScene.js';
-import { PreloadScene } from '../scenes/preloadScene.js';
-import { MenuScene } from '../scenes/menuScene.js';
-import { GameScene } from '../scenes/gameScene.js';
-import { UIScene } from '../scenes/UIScene.js';
 import Phaser from 'phaser';
 
 export const GAME_WIDTH = 480;
@@ -29,5 +24,5 @@ export const gameConfig = {
       debug: false,
     },
   },
-  scene: [BootScene, PreloadScene, MenuScene, GameScene, UIScene],
+  // scene: [...] — ЗДЕСЬ БОЛЬШЕ НЕТ СЦЕН!
 };

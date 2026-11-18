@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
-import { ParallaxBackground } from '../objects/parallaxBackground';
-import { MenuPanel } from '../objects/menuPanel';
+import { ParallaxBackground } from '../objects/ParallaxBackground';
+import { MenuPanel } from '../objects/MenuPanel';
 import { GAME_WIDTH, GAME_HEIGHT, MUSIC_VOLUME } from '../config/gameConfig';
 import { createMenuButton } from '../objects/buttonFactory';
 

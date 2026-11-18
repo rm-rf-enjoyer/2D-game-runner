@@ -1,12 +1,20 @@
 import Phaser from 'phaser';
-import { gameConfig } from './config/gameConfig.js';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { StatusBar } from '@capacitor/status-bar';
 import { ScrollbarHider } from 'capacitor-scrollbar-hider';
 
+import { gameConfig } from './config/gameConfig';
+import { BootScene } from './scenes/bootScene';
+import { PreloadScene } from './scenes/preloadScene';
+import { MenuScene } from './scenes/menuScene';
+import { GameScene } from './scenes/gameScene';
+import { UIScene } from './scenes/UIScene';
+
 ScrollbarHider.hideScrollbars();
-console.log('MAIN start');
+
+// Регистрируем сцены здесь, а не в gameConfig
+gameConfig.scene = [BootScene, PreloadScene, MenuScene, GameScene, UIScene];
 
 const game = new Phaser.Game(gameConfig);
 
@@ -19,25 +27,18 @@ let isEnginePaused = false;
 function pauseGameEngine() {
   if (isEnginePaused) return;
   isEnginePaused = true;
-  
-  // Отправляем событие в игру, чтобы GameScene открыл паузу
   game.events.emit('app-paused');
-  
-  // Даем Phaser 1 кадр, чтобы отрисовать меню паузы, и только потом усыпляем
   setTimeout(() => {
     game.loop.sleep();      
     game.sound.pauseAll();  
-    console.log('ENGINE: PAUSED');
   }, 50); 
 }
 
 function resumeGameEngine() {
   if (!isEnginePaused) return;
   isEnginePaused = false;
-  
   game.loop.wake();       
   game.sound.resumeAll(); 
-  console.log('ENGINE: RESUMED');
 }
 
 document.addEventListener('visibilitychange', () => {
