@@ -1,30 +1,69 @@
 import Phaser from 'phaser';
+import paletteSource from '../assets/bg/palette.gpl?raw';
 import { WorldManager } from '../systems/WorldManager';
 import { ParallaxBackground } from '../objects/ParallaxBackground';
-import { GAME_WIDTH, GAME_HEIGHT, MUSIC_VOLUME } from '../config/gameConfig';
+import { GAME_WIDTH, GAME_HEIGHT, MUSIC_VOLUME, GAMEPLAY_CONFIG } from '../config/gameConfig';
 import { Player } from '../objects/player';
 import { Foreground } from '../objects/Foreground';
-import { DeathCause } from '../config/playerConfig';
+import { DeathCause, PLAYER_CONFIG } from '../config/playerConfig';
 
-// Все магические числа в одном месте (Правило 2)
-const GAME_CONFIG = {
-  pixelsPerMeter: 10,
-  playerStartX: 100,
-  playerYOffset: 14,
-  worldSpeed: 130,
-  wallCollisionTolerance: 8,
-  pitFallTolerance: 50,
-  phase2Distance: 200,
-  phase3Distance: 400,
-  deathRestartDelay: 1500,
-  bloodParticleCount: 25,
+interface PuddleShape {
+  dx: number;
+  dy: number;
+  width: number;
+  height: number;
+}
+
+const PALETTE_COLOR_PATTERN = /^\s*(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})\s/;
+const BLOOD_RED_INDEX = 8;
+const BLOOD_DARK_INDEX = 7;
+
+const paletteColors: number[] = paletteSource
+  .split('\n')
+  .map(line => line.match(PALETTE_COLOR_PATTERN))
+  .filter((match): match is RegExpMatchArray => match !== null)
+  .map(match => (Number(match[1]) << 16) | (Number(match[2]) << 8) | Number(match[3]));
+
+const BLOOD_RED_COLOR = paletteColors[BLOOD_RED_INDEX];
+const BLOOD_DARK_COLOR = paletteColors[BLOOD_DARK_INDEX];
+
+const DEATH_CONFIG = {
+  restartDelay: 1500,
+  soundVolume: 0.6,
+};
+
+const BLOOD_EFFECT_CONFIG = {
+  particleCount: 25,
+  puddleDelay: 400,
+  particle: {
+    lifespan: 600,
+    speedX: { min: -120, max: 120 },
+    speedY: { min: -200, max: -50 },
+    gravityY: 800,
+    scale: 1,
+    depth: 10,
+  },
+  puddle: {
+    depth: 3,
+    yOffset: 12,
+    red: [
+      { dx: -8, dy: -2, width: 16, height: 2 },
+      { dx: -5, dy: -3, width: 10, height: 1 },
+      { dx: -10, dy: -1, width: 4, height: 1 },
+      { dx: 7, dy: -1, width: 3, height: 1 },
+    ] as PuddleShape[],
+    dark: [
+      { dx: -9, dy: 0, width: 3, height: 1 },
+      { dx: 7, dy: 0, width: 2, height: 1 },
+      { dx: -2, dy: 1, width: 4, height: 1 },
+    ] as PuddleShape[],
+  },
 };
 
 export class GameScene extends Phaser.Scene {
   private isDead: boolean = false;
   private distance: number = 0;
   private finalDistance: number = 0;
-  private phase: number = 1;
 
   private world!: WorldManager;
   private player!: Player;
@@ -40,10 +79,11 @@ export class GameScene extends Phaser.Scene {
   public create(): void {
     this.isDead = false;
     this.distance = 0;
-    this.phase = 1;
 
-    this.world = new WorldManager(this);
-    
+    this.world = new WorldManager(this, {
+      onLevelComplete: () => this._handleLevelComplete(),
+    });
+
     this._setupPlayer();
     this._setupCollisions();
     this._setupInput();
@@ -61,45 +101,35 @@ export class GameScene extends Phaser.Scene {
     this._updateEntities(delta);
     this._handleCollisions();
     this._handlePitFall();
-    
+
     if (this.isDead) return;
 
     this._updateScore(currentSpeed, delta);
-    this._checkPhaseTransition();
   }
 
-  // --- SETUP METHODS ---
-
   private _setupPlayer(): void {
-    const groundTopY = GAME_HEIGHT - 64;
+    const groundTopY = GAME_HEIGHT - GAMEPLAY_CONFIG.groundOffset;
     this.player = new Player(
-      this, 
-      GAME_CONFIG.playerStartX, 
-      groundTopY - GAME_CONFIG.playerYOffset, 
-      GAME_CONFIG.worldSpeed
+      this,
+      GAMEPLAY_CONFIG.playerStartX,
+      groundTopY - GAMEPLAY_CONFIG.playerYOffset,
+      GAMEPLAY_CONFIG.worldSpeed
     );
   }
 
   private _setupCollisions(): void {
     this.physics.add.collider(this.player.sprite, this.world.physicsGroup);
-    
-    this.physics.add.overlap(this.player.sprite, this.world.trashGroup, () => {
-      if (!this.isDead) {
-        this.finalDistance = this.distance;
-        this._onHit('ground'); 
-      }
-    });
   }
 
   private _setupInput(): void {
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.x < GAME_WIDTH / 2) {
+      if (pointer.x < GAME_WIDTH * GAMEPLAY_CONFIG.input.splitRatio) {
         this.player.jump();
-      } else {
-        // Пробуем ускорить мир. Если кулдаун прошел — запускаем дэш и у игрока!
-        if (this.world.triggerDash()) {
-          this.player.dash();
-        }
+        return;
+      }
+
+      if (this.world.triggerDash()) {
+        this.player.dash();
       }
     });
 
@@ -123,10 +153,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   private _setupUI(): void {
-    this.scoreText = this.add.bitmapText(10, 10, 'pixel-font', '0 m', 14)
-      .setScale(1)
-      .setTint(0xe0bd51)
-      .setDepth(100);
+    const score = GAMEPLAY_CONFIG.score;
+    this.scoreText = this.add.bitmapText(
+      score.x,
+      score.y,
+      'pixel-font',
+      score.initialText,
+      score.fontSize
+    )
+      .setScale(score.scale)
+      .setTint(score.tint)
+      .setDepth(score.depth);
 
     this.scene.launch('UIScene');
   }
@@ -137,8 +174,6 @@ export class GameScene extends Phaser.Scene {
       this.game.events.off('app-paused', this._onAppPaused, this);
     });
   }
-
-  // --- UPDATE LOGIC ---
 
   private _getCurrentSpeed(): number {
     return this.world.speed;
@@ -152,71 +187,54 @@ export class GameScene extends Phaser.Scene {
   }
 
   private _handleCollisions(): void {
-    const pBody = this.player.sprite.body;
-    
-    for (const p of this.world.currentPhase.platforms) {
-      const platBody = p.body.body;
+    const playerBody = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+    const cause = this.world.getWallCollisionCause(playerBody);
+    if (!cause) return;
 
-      if (Phaser.Geom.Intersects.RectangleToRectangle(
-          new Phaser.Geom.Rectangle(pBody.x, pBody.y, pBody.width, pBody.height),
-          new Phaser.Geom.Rectangle(platBody.x, platBody.y, platBody.width, platBody.height)
-      )) {
-        if (pBody.bottom > platBody.top + GAME_CONFIG.wallCollisionTolerance && pBody.right > platBody.left) {
-          this.finalDistance = this.distance;
-          this._onHit('wall'); 
-          return;
-        }
-      }
-    }
+    this.finalDistance = this.distance;
+    this._onHit(cause);
   }
 
   private _handlePitFall(): void {
-    const groundTopY = GAME_HEIGHT - 64;
-    const playerBottomY = this.player.sprite.y + 12;
+    const groundTopY = GAME_HEIGHT - GAMEPLAY_CONFIG.groundOffset;
+    const playerHalfHeight = PLAYER_CONFIG.bodySize.height / 2;
+    const playerBottomY = this.player.sprite.y + playerHalfHeight;
 
-    if (playerBottomY > groundTopY + GAME_CONFIG.pitFallTolerance) {
+    if (playerBottomY > groundTopY + GAMEPLAY_CONFIG.pitFallTolerance) {
       this.finalDistance = this.distance;
       this._onHit('pit');
     }
   }
 
   private _updateScore(currentSpeed: number, delta: number): void {
-    this.distance += (currentSpeed * (delta / 1000)) / GAME_CONFIG.pixelsPerMeter;
+    const seconds = delta / GAMEPLAY_CONFIG.msPerSecond;
+    this.distance += (currentSpeed * seconds) / GAMEPLAY_CONFIG.pixelsPerMeter;
     this.scoreText.setText(Math.floor(this.distance) + ' m');
   }
 
-  private _checkPhaseTransition(): void {
-    if (this.distance >= GAME_CONFIG.phase2Distance && this.phase === 1) {
-      this.phase = 2;
-      this.world.setPhase(2);
-      this.cameras.main.flash(300, 69, 235, 243, false);
-    } else if (this.distance >= GAME_CONFIG.phase3Distance && this.phase === 2) {
-      this.phase = 3;
-      this.world.setPhase(3);
-      this.cameras.main.flash(300, 69, 235, 243, false);
-    }
+  private _handleLevelComplete(): void {
+    if (this.isDead) return;
+    this.scene.start('MenuScene');
   }
-
-  // --- DEATH LOGIC ---
 
   private _onHit(cause: DeathCause): void {
     if (this.isDead) return;
     this.isDead = true;
 
     this._stopGameplay();
-    this.player.die(cause); 
+    this.player.die(cause);
     this.scoreText.setText(Math.floor(this.finalDistance) + ' m');
 
     this._spawnBloodEffect();
-    if (cause === 'ground') {
-      this._drawBloodPuddle();
+    if (cause === 'obstacle') {
+      this._scheduleBloodPuddle();
     }
 
-    this.time.delayedCall(GAME_CONFIG.deathRestartDelay, () => this._restartGame());
+    this.time.delayedCall(DEATH_CONFIG.restartDelay, () => this._restartGame());
   }
 
   private _stopGameplay(): void {
-    this.sound.play('sfx-death', { volume: 0.6 });
+    this.sound.play('sfx-death', { volume: DEATH_CONFIG.soundVolume });
     this.input.removeAllListeners('pointerdown');
     this.input.keyboard?.removeAllListeners('keydown-SPACE');
     this.input.keyboard?.removeAllListeners('keydown-SHIFT');
@@ -224,38 +242,61 @@ export class GameScene extends Phaser.Scene {
   }
 
   private _spawnBloodEffect(): void {
+    const effect = BLOOD_EFFECT_CONFIG.particle;
     const blood = this.add.particles(
-      this.player.sprite.x, this.player.sprite.y, 'pixel-particle',
+      this.player.sprite.x,
+      this.player.sprite.y,
+      'pixel-particle',
       {
-        lifespan: 600, 
-        speedX: { min: -120, max: 120 },
-        speedY: { min: -200, max: -50 }, 
-        gravityY: 800, 
-        scale: 1, 
-        quantity: GAME_CONFIG.bloodParticleCount, 
+        lifespan: effect.lifespan,
+        speedX: effect.speedX,
+        speedY: effect.speedY,
+        gravityY: effect.gravityY,
+        scale: effect.scale,
+        quantity: BLOOD_EFFECT_CONFIG.particleCount,
         emitting: false,
-        tint: [0xB3202A, 0x702359], 
+        tint: [BLOOD_RED_COLOR, BLOOD_DARK_COLOR],
         roundPixels: true,
       }
-    ).setDepth(10);
-    blood.explode(GAME_CONFIG.bloodParticleCount);
+    ).setDepth(effect.depth);
+
+    blood.explode(BLOOD_EFFECT_CONFIG.particleCount);
+  }
+
+  private _scheduleBloodPuddle(): void {
+    this.time.delayedCall(BLOOD_EFFECT_CONFIG.puddleDelay, () => {
+      if (!this.isDead) return;
+      this._drawBloodPuddle();
+    });
   }
 
   private _drawBloodPuddle(): void {
-    const px = Math.round(this.player.sprite.x);
-    const py = Math.round(this.player.sprite.y + 12);
+    const puddle = BLOOD_EFFECT_CONFIG.puddle;
+    const origin = {
+      x: Math.round(this.player.sprite.x),
+      y: Math.round(this.player.sprite.y + puddle.yOffset),
+    };
+    const graphics = this.add.graphics().setDepth(puddle.depth);
 
-    const puddle = this.add.graphics().setDepth(3);
-    puddle.fillStyle(0xB3202A, 1);
-    puddle.fillRect(px - 16, py - 2, 32, 2);
-    puddle.fillRect(px - 10, py - 3, 20, 1);
-    puddle.fillRect(px - 20, py - 1, 6, 1);
-    puddle.fillRect(px + 14, py - 1, 8, 1);
+    this._fillPuddleShapes(graphics, origin, puddle.red, BLOOD_RED_COLOR);
+    this._fillPuddleShapes(graphics, origin, puddle.dark, BLOOD_DARK_COLOR);
+  }
 
-    puddle.fillStyle(0x702359, 1);
-    puddle.fillRect(px - 18, py, 4, 1);
-    puddle.fillRect(px + 14, py, 6, 1);
-    puddle.fillRect(px - 4, py + 1, 8, 1);
+  private _fillPuddleShapes(
+    graphics: Phaser.GameObjects.Graphics,
+    origin: { x: number; y: number },
+    shapes: PuddleShape[],
+    color: number
+  ): void {
+    graphics.fillStyle(color, 1);
+    shapes.forEach(shape => {
+      graphics.fillRect(
+        origin.x + shape.dx,
+        origin.y + shape.dy,
+        shape.width,
+        shape.height
+      );
+    });
   }
 
   private _restartGame(): void {

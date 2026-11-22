@@ -1,77 +1,100 @@
 import Phaser from 'phaser';
-import { Platform } from '../objects/Platform';
-import { GAME_WIDTH } from '../config/gameConfig';
+import { PIPE_CONFIG } from '../config/pipeConfig';
+import { ChunkDefinition, ChunkInstance, ChunkTemplate } from '../chunks/ChunkTemplate';
+import { PHASE1_JUMP_CHUNK } from '../chunks/phase1Chunks';
+import { PHASE1_JUMP_DASH_CHUNK } from '../chunks/phase1DashChunks';
 
-const BLOCK_SIZE = 16;
-const START_BLOCKS = 25;
-const MIN_BLOCKS = 8;
-const MAX_BLOCKS = 18;
-const GAP_MIN = 2;
-const GAP_MAX = 3;
+export interface Phase1Options {
+  maxChunks?: number;
+  onComplete?: () => void;
+}
 
 export class Phase1 {
-  public platforms: Platform[] = [];
-  public nextSpawnX: number = 0;
-  
-  private scene: Phaser.Scene;
-  private startY: number;
-  private physicsGroup: Phaser.Physics.Arcade.StaticGroup;
-  private trashGroup: Phaser.Physics.Arcade.StaticGroup;
+  public readonly platforms: Phaser.GameObjects.GameObject[] = [];
+  public nextX: number = PIPE_CONFIG.spawn.startX;
+
+  private readonly chunks: ChunkInstance[] = [];
+  private readonly sequence: ChunkDefinition[];
+  private readonly maxChunks: number;
+  private readonly onComplete?: () => void;
+  private spawnedChunks: number = 0;
+  private completed: boolean = false;
 
   constructor(
-    scene: Phaser.Scene, 
-    startY: number, 
-    physicsGroup: Phaser.Physics.Arcade.StaticGroup, 
-    trashGroup: Phaser.Physics.Arcade.StaticGroup
+    private readonly scene: Phaser.Scene,
+    private readonly startY: number,
+    private readonly physicsGroup: Phaser.Physics.Arcade.StaticGroup,
+    options: Phase1Options = {}
   ) {
-    this.scene = scene;
-    this.startY = startY;
-    this.physicsGroup = physicsGroup;
-    this.trashGroup = trashGroup;
+    this.maxChunks = options.maxChunks ?? 3;
+    this.onComplete = options.onComplete;
+    this.sequence = [
+      PHASE1_JUMP_CHUNK,
+      PHASE1_JUMP_CHUNK,
+      PHASE1_JUMP_CHUNK,
+      PHASE1_JUMP_DASH_CHUNK,
+      PHASE1_JUMP_DASH_CHUNK,
+      PHASE1_JUMP_DASH_CHUNK,
+    ];
   }
 
   public init(): void {
-    this._spawnPlatform(-200, START_BLOCKS);
-    this.nextSpawnX = -200 + (START_BLOCKS * BLOCK_SIZE); 
+    this._fillAhead();
   }
 
   public update(shift: number): void {
-    for (let i = this.platforms.length - 1; i >= 0; i--) {
-      const p = this.platforms[i];
-      p.update(shift);
-      if (p.x + p.width < -300) {
-        p.destroy();
-        this.platforms.splice(i, 1);
-      }
-    }
-    
-    this.nextSpawnX -= shift;
+    this._moveChunks(shift);
+    this._removeOffscreenChunks();
+    this.nextX -= shift;
+    this._fillAhead();
+    this._checkCompletion();
+  }
 
-    while (this.nextSpawnX < GAME_WIDTH + 200) {
-      this._spawnNext();
+  protected _fillAhead(): void {
+    while (!this.completed && this.spawnedChunks < this.maxChunks) {
+      const definition = this.sequence[this.spawnedChunks % this.sequence.length];
+      this._spawnChunk(definition);
     }
   }
 
-  private _spawnNext(): void {
-    const gap = Phaser.Math.Between(GAP_MIN, GAP_MAX) * BLOCK_SIZE; 
-    const x = this.nextSpawnX + gap;
-    const blocks = Phaser.Math.Between(MIN_BLOCKS, MAX_BLOCKS); 
-    
-    this._spawnPlatform(x, blocks);
-    this.nextSpawnX = x + (blocks * BLOCK_SIZE);
+  private _spawnChunk(definition: ChunkDefinition): void {
+    const chunk = ChunkTemplate.spawn(definition, {
+      scene: this.scene,
+      physicsGroup: this.physicsGroup,
+      startX: this.nextX,
+      baseY: this.startY,
+    });
+
+    this.chunks.push(chunk);
+    this.platforms.push(...chunk.platforms);
+    this.nextX = chunk.nextX;
+    this.spawnedChunks += 1;
   }
 
-  private _spawnPlatform(x: number, blocks: number): void {
-    const p = new Platform(
-      this.scene,
-      x,
-      this.startY,
-      blocks,
-      'ground',
-      this.physicsGroup,
-      this.trashGroup,
-      2
-    );
-    this.platforms.push(p);
+  private _moveChunks(shift: number): void {
+    this.chunks.forEach(chunk => chunk.update(shift));
+  }
+
+  private _removeOffscreenChunks(): void {
+    for (let index = this.chunks.length - 1; index >= 0; index--) {
+      const chunk = this.chunks[index];
+      if (!chunk.isOffscreen(PIPE_CONFIG.spawn.despawnMargin)) continue;
+
+      chunk.platforms.forEach(platform => {
+        const platformIndex = this.platforms.indexOf(platform);
+        if (platformIndex !== -1) this.platforms.splice(platformIndex, 1);
+      });
+      chunk.destroy();
+      this.chunks.splice(index, 1);
+    }
+  }
+
+  private _checkCompletion(): void {
+    if (this.completed) return;
+    if (this.spawnedChunks < this.maxChunks) return;
+    if (this.chunks.length > 0) return;
+
+    this.completed = true;
+    this.onComplete?.();
   }
 }

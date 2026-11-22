@@ -1,106 +1,89 @@
 import Phaser from 'phaser';
+import { GAME_HEIGHT, GAMEPLAY_CONFIG } from '../config/gameConfig';
+import { DeathCause } from '../config/playerConfig';
+import { PIPE_CONFIG } from '../config/pipeConfig';
 import { Phase1 } from '../phases/Phase1';
-import { Phase2 } from '../phases/Phase2';
-import { Phase3 } from '../phases/Phase3';
-import { GAME_HEIGHT } from '../config/gameConfig';
 
 const WORLD_CONFIG = {
   initialSpeed: 130,
   dashSpeed: 520,
-  speedDecayStep: 130,      // Плавный шаг затухания (при интервале 100мс)
-  speedDecayInterval: 150, // Каждые 0.1 сек
-  dashCooldown: 2000,      // Кулдаун 2 секунды (в миллисекундах)
+  speedDecayStep: 130,
+  speedDecayInterval: 150,
+  dashCooldown: 2000,
   maxDelta: 50,
-  groundOffset: 64,
 };
 
-export type PhaseType = 1 | 2 | 3;
+export interface WorldManagerOptions {
+  onLevelComplete?: () => void;
+}
 
 export class WorldManager {
   public speed: number = WORLD_CONFIG.initialSpeed;
   public physicsGroup: Phaser.Physics.Arcade.StaticGroup;
-  public trashGroup: Phaser.Physics.Arcade.StaticGroup;
-  public currentPhase!: Phase1 | Phase2 | Phase3;
 
-  private scene: Phaser.Scene;
-  private groundTopY: number;
+  private readonly scene: Phaser.Scene;
+  private readonly groundY: number;
+  private readonly pipe: Phase1;
   private isBoosting: boolean = false;
   private decayTimer: number = 0;
-  
-  // Переменные для кулдауна дэша
   private lastDashTime: number = -Infinity;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, options: WorldManagerOptions = {}) {
     this.scene = scene;
-    this.groundTopY = GAME_HEIGHT - WORLD_CONFIG.groundOffset;
+    this.groundY = GAME_HEIGHT - GAMEPLAY_CONFIG.groundOffset;
     this.physicsGroup = scene.physics.add.staticGroup();
-    this.trashGroup = scene.physics.add.staticGroup();
+    this.pipe = new Phase1(scene, this.groundY, this.physicsGroup, {
+      maxChunks: 6,
+      onComplete: options.onLevelComplete,
+    });
 
-    this.setPhase(1);
-  }
-
-  public setPhase(phaseType: PhaseType): void {
-    if (phaseType === 1) {
-      this.currentPhase = new Phase1(
-        this.scene,
-        this.groundTopY,
-        this.physicsGroup,
-        this.trashGroup
-      );
-      this.currentPhase.init();
-      return;
-    }
-
-    const prevPlatforms = this.currentPhase.platforms;
-    const prevSpawnX = this.currentPhase.nextSpawnX;
-
-    if (phaseType === 2) {
-      this.currentPhase = new Phase2(
-        this.scene,
-        this.groundTopY,
-        this.physicsGroup,
-        this.trashGroup,
-        {
-          platforms: prevPlatforms,
-          nextSpawnX: prevSpawnX,
-        }
-      );
-      return;
-    }
-
-    this.currentPhase = new Phase3(
-      this.scene,
-      this.groundTopY,
-      this.physicsGroup,
-      this.trashGroup,
-      prevPlatforms,
-      prevSpawnX
-    );
+    this.pipe.init();
   }
 
   public triggerDash(): boolean {
     const currentTime = this.scene.time.now;
-
-    // Проверяем кулдаун (2 секунды)
     if (currentTime - this.lastDashTime < WORLD_CONFIG.dashCooldown) {
-      return false; // Кулдаун еще идет, буст отклонен
+      return false;
     }
 
     this.lastDashTime = currentTime;
     this.speed = WORLD_CONFIG.dashSpeed;
     this.isBoosting = true;
     this.decayTimer = 0;
-    return true; // Успешно ускорили мир
+    return true;
   }
 
-  public burst(): void {
-    this.triggerDash();
+  public getWallCollisionCause(playerBody: Phaser.Physics.Arcade.Body): DeathCause | null {
+    const playerBounds = new Phaser.Geom.Rectangle(
+      playerBody.x,
+      playerBody.y,
+      playerBody.width,
+      playerBody.height
+    );
+
+    const platform = this.pipe.platforms.find(candidate => {
+      if (!('getBounds' in candidate) || typeof candidate.getBounds !== 'function') {
+        return false;
+      }
+
+      const platformBounds = (candidate as any).getBounds() as Phaser.Geom.Rectangle;
+      const intersects = Phaser.Geom.Intersects.RectangleToRectangle(
+        playerBounds,
+        platformBounds
+      );
+
+      return intersects
+        && playerBody.bottom > platformBounds.top + PIPE_CONFIG.collision.wallTolerance
+        && playerBody.right > platformBounds.left;
+    });
+
+    if (!platform) return null;
+    return 'wall';
   }
 
   public update(delta: number): void {
     this._updateSpeedDecay(delta);
-    const shift = this._calculateShift(delta);
-    this.currentPhase.update(shift);
+    this.pipe.update(this._calculateShift(delta));
   }
 
   private _updateSpeedDecay(delta: number): void {
@@ -123,7 +106,6 @@ export class WorldManager {
 
   private _calculateShift(delta: number): number {
     const safeDelta = Math.min(delta, WORLD_CONFIG.maxDelta);
-    const dt = safeDelta / 1000;
-    return this.speed * dt;
+    return this.speed * (safeDelta / GAMEPLAY_CONFIG.msPerSecond);
   }
 }

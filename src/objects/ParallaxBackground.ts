@@ -23,9 +23,16 @@ export interface ParallaxLayer {
   speed: number;
 }
 
+export interface ParallaxImageLayer {
+  images: Phaser.GameObjects.Image[];
+  width: number;
+  speed: number;
+}
+
 export class ParallaxBackground {
   private scene: Phaser.Scene;
   private layers: ParallaxLayer[] = [];
+  private imageLayers: ParallaxImageLayer[] = [];
   private train: Phaser.GameObjects.Image;
   
   private burstRemaining: number = 0;
@@ -45,6 +52,11 @@ export class ParallaxBackground {
       speed: cfg.speed
     }));
 
+    this.imageLayers = [
+      this._createImageLayer(['bg5'], 1.0, -6),
+      this._createImageLayer(['bg6a', 'bg6b'], 1.0, -2),
+    ];
+
     this.train = this._setupTrain();
     this._setupTrainTimer();
   }
@@ -53,6 +65,17 @@ export class ParallaxBackground {
     return this.scene.add.tileSprite(
       GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, key
     ).setDepth(depth);
+  }
+
+  private _createImageLayer(keys: string[], speed: number, depth: number): ParallaxImageLayer {
+    const width = (this.scene.textures.get(keys[0]).getSourceImage() as HTMLImageElement).width;
+    const images = Array.from({ length: keys.length * 2 }, (_, index) =>
+      this.scene.add.image(
+        index * width, GAME_HEIGHT / 2, keys[index % keys.length]
+      ).setOrigin(0, 0.5).setDepth(depth)
+    );
+
+    return { images, width, speed };
   }
 
   private _setupTrain(): Phaser.GameObjects.Image {
@@ -104,19 +127,34 @@ export class ParallaxBackground {
       this.burstRemaining -= burstShift;
     }
 
-    this._moveLayers(shift, burstShift);
+    const totalShift = shift + burstShift;
+    this._moveLayers(totalShift);
+    this._moveImageLayers(totalShift);
   }
 
-  private _moveLayers(baseShift: number, burstShift: number): void {
+  private _moveLayers(totalShift: number): void {
     this.layers.forEach(layer => {
-      const layerShift = (baseShift + burstShift) * layer.speed;
-      layer.ts.tilePositionX += layerShift;
+      layer.ts.tilePositionX += totalShift * layer.speed;
+    });
+  }
+
+  private _moveImageLayers(totalShift: number): void {
+    this.imageLayers.forEach(layer => {
+      const layerShift = totalShift * layer.speed;
+      layer.images.forEach(image => {
+        image.x -= layerShift;
+        if (image.x + layer.width <= 0) {
+          image.x += layer.width * layer.images.length;
+        }
+      });
     });
   }
 
   public destroy(): void {
     this.layers.forEach(layer => layer.ts.destroy());
+    this.imageLayers.forEach(layer => layer.images.forEach(image => image.destroy()));
     if (this.train) this.train.destroy();
     this.layers = [];
+    this.imageLayers = [];
   }
 }
