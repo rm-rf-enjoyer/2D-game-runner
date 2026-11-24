@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import paletteSource from '../assets/bg/palette.gpl?raw';
+import { getPaletteColor } from '../config/palette';
 import { WorldManager } from '../systems/WorldManager';
+import { Rain } from '../objects/Rain';
 import { Scenery, SceneryState } from '../objects/Scenery';
 import {
   GAME_WIDTH,
@@ -19,23 +20,11 @@ interface PuddleShape {
   height: number;
 }
 
-const PALETTE_COLOR_PATTERN = /^\s*(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})\s/;
 const BLOOD_RED_INDEX = 8;
 const BLOOD_DARK_INDEX = 7;
 
-const paletteColors: number[] = paletteSource
-  .split('\n')
-  .map(line => line.match(PALETTE_COLOR_PATTERN))
-  .filter((match): match is RegExpMatchArray => match !== null)
-  .map(match => {
-    const red = Number(match[1]);
-    const green = Number(match[2]);
-    const blue = Number(match[3]);
-    return (red << 16) | (green << 8) | blue;
-  });
-
-const BLOOD_RED_COLOR = paletteColors[BLOOD_RED_INDEX];
-const BLOOD_DARK_COLOR = paletteColors[BLOOD_DARK_INDEX];
+const BLOOD_RED_COLOR = getPaletteColor(BLOOD_RED_INDEX);
+const BLOOD_DARK_COLOR = getPaletteColor(BLOOD_DARK_INDEX);
 
 const DEATH_CONFIG = {
   restartDelay: 1500,
@@ -88,6 +77,7 @@ export class GameScene extends Phaser.Scene {
   private world!: WorldManager;
   private player!: Player;
   private scenery!: Scenery;
+  private rain!: Rain;
   private music!: Phaser.Sound.BaseSound;
   private scoreText!: Phaser.GameObjects.BitmapText;
 
@@ -107,15 +97,17 @@ export class GameScene extends Phaser.Scene {
     this._setupCollisions();
     this._setupInput();
     this._setupScenery(data.scenery);
+    this._setupRain();
     this._setupAudio();
     this._setupUI();
     this._setupEvents();
   }
 
   public update(_time: number, delta: number): void {
-    if (this.isDead) return;
-
     const currentSpeed = this._getCurrentSpeed();
+    this.rain.update(delta, currentSpeed, this.world.isDashActive);
+
+    if (this.isDead) return;
 
     this._updateEntities(delta);
     this._handleCollisions();
@@ -176,6 +168,10 @@ export class GameScene extends Phaser.Scene {
 
   private _setupScenery(state?: SceneryState): void {
     this.scenery = new Scenery(this, 'game', state);
+  }
+
+  private _setupRain(): void {
+    this.rain = new Rain(this, 'game');
   }
 
   private _setupAudio(): void {

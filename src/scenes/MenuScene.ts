@@ -1,7 +1,13 @@
 import Phaser from 'phaser';
 import { Scenery, SceneryState } from '../objects/Scenery';
 import { MenuPanel } from '../objects/MenuPanel';
-import { GAME_WIDTH, GAME_HEIGHT, MUSIC_VOLUME } from '../config/gameConfig';
+import { Rain } from '../objects/Rain';
+import {
+  GAME_WIDTH,
+  GAME_HEIGHT,
+  GAMEPLAY_CONFIG,
+  MUSIC_VOLUME
+} from '../config/gameConfig';
 import {
   createMenuButtons,
   MenuButtonConfig
@@ -15,6 +21,7 @@ const MENU_MUSIC_KEY = 'music-menu';
 
 export class MenuScene extends Phaser.Scene {
   private scenery!: Scenery;
+  private rain!: Rain;
   private panel!: MenuPanel;
   private music?: Phaser.Sound.BaseSound;
 
@@ -30,10 +37,12 @@ export class MenuScene extends Phaser.Scene {
 
   public update(_time: number, delta: number): void {
     this.scenery.update(delta);
+    this.rain.update(delta, GAMEPLAY_CONFIG.worldSpeed);
   }
 
   private setupUI(state?: SceneryState): void {
     this.scenery = new Scenery(this, 'menu', state);
+    this.rain = new Rain(this, 'menu');
 
     this.panel = new MenuPanel({
       scene: this,
@@ -41,7 +50,7 @@ export class MenuScene extends Phaser.Scene {
       centerY: GAME_HEIGHT / 2,
       widthTiles: PANEL_TILES
     });
-    this.panel.setDepth(0);
+    this.panel.setDepth(5);
 
     const configs: MenuButtonConfig[] = [
       { text: 'PLAY', yOffset: 0, onClick: () => this.handlePlay() },

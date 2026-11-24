@@ -19,6 +19,7 @@ import fanSpinPng from '../assets/objects/fanSpin.png';
 import { PLATFORM_CONFIGS, PLATFORM_TILE_SIZE } from '../config/platforms';
 import {
   FAN_ANIM_KEY,
+  FAN_FOG_TEXTURE_KEY,
   FAN_FRAME_COUNT,
   FAN_FRAME_RATE,
   FAN_FRAME_SIZE,
@@ -53,6 +54,7 @@ import btnPressedCenter from '../assets/ui/buttons/5.png';
 import btnPressedRight from '../assets/ui/buttons/6.png';
 
 import { DASH_TEXTURE_KEY, DASH_ANIM_KEY } from '../config/playerConfig';
+import { getPaletteColor } from '../config/palette';
 
 import runPng from '../assets/player/player.png';
 import jumpPng from '../assets/player/hero-jump.png';
@@ -81,6 +83,11 @@ const PRELOAD_CONFIG = {
     alpha: 1,
     pixel: { key: 'pixel-particle', width: 2, height: 2 },
     speedLine: { key: 'speed-line', width: 16, height: 2 },
+    fog: {
+      key: FAN_FOG_TEXTURE_KEY,
+      size: 8,
+      colors: [getPaletteColor(10), getPaletteColor(11)],
+    },
   },
 };
 
@@ -226,6 +233,7 @@ export class PreloadScene extends Phaser.Scene {
     const particles = PRELOAD_CONFIG.particles;
     this._generateTexture(particles.pixel);
     this._generateTexture(particles.speedLine);
+    this._generateFogTexture(particles.fog);
   }
 
   private _generateTexture(config: {
@@ -238,6 +246,36 @@ export class PreloadScene extends Phaser.Scene {
     g.fillStyle(particles.color, particles.alpha);
     g.fillRect(0, 0, config.width, config.height);
     g.generateTexture(config.key, config.width, config.height);
+    g.destroy();
+  }
+
+  private _generateFogTexture(config: {
+    key: string;
+    size: number;
+    colors: number[];
+  }): void {
+    const pattern = [
+      '   x    ',
+      '  xxxx  ',
+      ' xxxxxx ',
+      'xxxxxxxx',
+      'xxxxxxxx',
+      ' xxxxxx ',
+      '  xxxx  ',
+      '    x   ',
+    ];
+    const g = this.add.graphics();
+
+    pattern.forEach((row, y) => {
+      [...row].forEach((cell, x) => {
+        if (cell === ' ') return;
+        const step = (x + y) % 2;
+        g.fillStyle(config.colors[step], step === 0 ? 0.4 : 0.18);
+        g.fillRect(x, y, 1, 1);
+      });
+    });
+
+    g.generateTexture(config.key, config.size, config.size);
     g.destroy();
   }
 }

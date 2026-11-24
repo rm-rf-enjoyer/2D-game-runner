@@ -57,6 +57,10 @@ export class WorldManager {
     return [phase1, phase2];
   }
 
+  public get isDashActive(): boolean {
+    return this.isBoosting;
+  }
+
   public triggerDash(): boolean {
     const currentTime = this.scene.time.now;
     if (currentTime - this.lastDashTime < WORLD_CONFIG.dashCooldown) {
