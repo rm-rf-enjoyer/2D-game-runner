@@ -1,11 +1,9 @@
 import Phaser from 'phaser';
-import { PIPE_TILES_KEY, PIPE_TILE_SIZE } from '../config/pipeConfig';
+import { PLATFORM_TILE_SIZE, PlatformConfig } from '../config/platforms';
 
 export interface PipeSegmentOptions {
   tileCount: number;
-  frame: number;
-  depth: number;
-  edgeFrames?: { left: number; right: number };
+  config: PlatformConfig;
 }
 
 export abstract class PipeSegment {
@@ -14,9 +12,7 @@ export abstract class PipeSegment {
   protected readonly y: number;
   protected readonly width: number;
 
-  private readonly frame: number;
-  private readonly depth: number;
-  private readonly edgeFrames?: { left: number; right: number };
+  private readonly config: PlatformConfig;
 
   constructor(
     protected readonly scene: Phaser.Scene,
@@ -26,10 +22,8 @@ export abstract class PipeSegment {
   ) {
     this.x = x;
     this.y = y;
-    this.width = options.tileCount * PIPE_TILE_SIZE;
-    this.frame = options.frame;
-    this.depth = options.depth;
-    this.edgeFrames = options.edgeFrames;
+    this.width = options.tileCount * PLATFORM_TILE_SIZE;
+    this.config = options.config;
     this._createTiles();
   }
 
@@ -50,26 +44,26 @@ export abstract class PipeSegment {
   }
 
   private _createTiles(): void {
-    const tileCount = this.width / PIPE_TILE_SIZE;
+    const tileCount = this.width / PLATFORM_TILE_SIZE;
 
     for (let index = 0; index < tileCount; index++) {
       const tile = this.scene.add.image(
-        this.x + index * PIPE_TILE_SIZE,
+        this.x + index * PLATFORM_TILE_SIZE,
         this.y,
-        PIPE_TILES_KEY,
+        this.config.textureKey,
         this._getFrame(index, tileCount)
       )
         .setOrigin(0, 0)
-        .setDepth(this.depth);
+        .setDepth(this.config.depth);
 
       this.tiles.push(tile);
     }
   }
 
   private _getFrame(index: number, tileCount: number): number {
-    if (!this.edgeFrames) return this.frame;
-    if (index === 0) return this.edgeFrames.left;
-    if (index === tileCount - 1) return this.edgeFrames.right;
-    return this.frame;
+    if (!this.config.edgeFrames) return this.config.frame;
+    if (index === 0) return this.config.edgeFrames.left;
+    if (index === tileCount - 1) return this.config.edgeFrames.right;
+    return this.config.frame;
   }
 }

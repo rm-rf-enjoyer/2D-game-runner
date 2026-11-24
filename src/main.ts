@@ -5,10 +5,10 @@ import { StatusBar } from '@capacitor/status-bar';
 import { ScrollbarHider } from 'capacitor-scrollbar-hider';
 
 import { gameConfig } from './config/gameConfig';
-import { BootScene } from './scenes/bootScene';
-import { PreloadScene } from './scenes/preloadScene';
-import { MenuScene } from './scenes/menuScene';
-import { GameScene } from './scenes/gameScene';
+import { BootScene } from './scenes/BootScene';
+import { PreloadScene } from './scenes/PreloadScene';
+import { MenuScene } from './scenes/MenuScene';
+import { GameScene } from './scenes/GameScene';
 import { UIScene } from './scenes/UIScene';
 
 ScrollbarHider.hideScrollbars();

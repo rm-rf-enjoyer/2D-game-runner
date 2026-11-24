@@ -13,18 +13,19 @@ export const GAMEPLAY_CONFIG = {
   playerYOffset: 14,
   worldSpeed: 130,
   pitFallTolerance: 50,
-  phase: { first: 1, second: 2 },
   input: { splitRatio: 0.5 },
   score: {
     x: 10,
     y: 10,
     fontSize: 14,
-    tint: 0xe0bd51,
+    tint: 0xe6e564,
     depth: 100,
     scale: 1,
     initialText: '0 m',
   },
 };
+
+export const GROUND_Y = GAME_HEIGHT - GAMEPLAY_CONFIG.groundOffset;
 
 export const gameConfig = {
   type: Phaser.AUTO,

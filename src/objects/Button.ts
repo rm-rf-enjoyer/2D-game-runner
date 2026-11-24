@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { getTextureSize } from '../utils/common';
 
 export interface ButtonConfig {
   scene: Phaser.Scene;
@@ -11,9 +12,9 @@ export interface ButtonConfig {
 
 export class Button {
   private scene: Phaser.Scene;
-  private container: Phaser.GameObjects.Container;
+  public readonly container: Phaser.GameObjects.Container;
   private hitArea: Phaser.GameObjects.Zone;
-  
+
   private left: Phaser.GameObjects.Image;
   private center: Phaser.GameObjects.TileSprite;
   private right: Phaser.GameObjects.Image;
@@ -32,15 +33,25 @@ export class Button {
 
     this.container = this.scene.add.container(x, y);
 
-    const leftTex = this.scene.textures.get('btn-normal-left').getSourceImage();
-    const rightTex = this.scene.textures.get('btn-normal-right').getSourceImage();
-    const leftW = leftTex.width;
-    const rightW = rightTex.width;
+    const leftW = getTextureSize(this.scene, 'btn-normal-left').width;
+    const rightW = getTextureSize(this.scene, 'btn-normal-right').width;
     const centerW = Math.round(width - leftW - rightW);
 
-    this.left = this.scene.add.image(-width / 2 + leftW / 2, 0, 'btn-normal-left');
-    this.center = this.scene.add.tileSprite(0, 0, centerW, height, 'btn-normal-center');
-    this.right = this.scene.add.image(width / 2 - rightW / 2, 0, 'btn-normal-right');
+    this.left = this._createSideImage(
+      'btn-normal-left',
+      -width / 2 + leftW / 2
+    );
+    this.center = this.scene.add.tileSprite(
+      0,
+      0,
+      centerW,
+      height,
+      'btn-normal-center'
+    );
+    this.right = this._createSideImage(
+      'btn-normal-right',
+      width / 2 - rightW / 2
+    );
 
     this.container.add([this.left, this.center, this.right]);
 
@@ -52,6 +63,13 @@ export class Button {
     this.hitArea.on('pointerdown', () => this._press());
     this.hitArea.on('pointerup', () => this._release(true));
     this.hitArea.on('pointerout', () => this._release(false));
+  }
+
+  private _createSideImage(
+    key: string,
+    x: number
+  ): Phaser.GameObjects.Image {
+    return this.scene.add.image(x, 0, key);
   }
 
   private _press(): void {

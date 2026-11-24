@@ -13,8 +13,17 @@ import bg3 from '../assets/bg/city3.png';
 import bg4 from '../assets/bg/city4.png';
 import bg5 from '../assets/bg/city5.png';
 
-import pipeTilesPng from '../assets/tiles/tileset.png';
-import { PIPE_TILES_KEY, PIPE_TILE_SIZE } from '../config/pipeConfig';
+import pipeTilesPng from '../assets/tiles/pipeTileset.png';
+import tilePng from '../assets/tiles/tile.png';
+import fanSpinPng from '../assets/objects/fanSpin.png';
+import { PLATFORM_CONFIGS, PLATFORM_TILE_SIZE } from '../config/platforms';
+import {
+  FAN_ANIM_KEY,
+  FAN_FRAME_COUNT,
+  FAN_FRAME_RATE,
+  FAN_FRAME_SIZE,
+  FAN_TEXTURE_KEY
+} from '../config/objectsConfig';
 import bg6a from '../assets/bg/city6a.png';
 import bg6b from '../assets/bg/city6b.png';
 import foregroundPng from '../assets/bg/Foreground.png';
@@ -126,24 +135,31 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private _loadTiles(): void {
-    this.load.spritesheet(PIPE_TILES_KEY, pipeTilesPng, {
-      frameWidth: PIPE_TILE_SIZE,
-      frameHeight: PIPE_TILE_SIZE,
+    this.load.spritesheet(PLATFORM_CONFIGS.pipe.textureKey, pipeTilesPng, {
+      frameWidth: PLATFORM_TILE_SIZE,
+      frameHeight: PLATFORM_TILE_SIZE,
+    });
+    this.load.image(PLATFORM_CONFIGS.tile.textureKey, tilePng);
+    this.load.spritesheet(FAN_TEXTURE_KEY, fanSpinPng, {
+      frameWidth: FAN_FRAME_SIZE,
+      frameHeight: FAN_FRAME_SIZE,
     });
   }
 
   private _loadPlayer(): void {
     const frameSize = PRELOAD_CONFIG.player.frameSize;
     this.load.image('player', runPng);
-    this.load.spritesheet('player-jump', jumpPng, {
-      frameWidth: frameSize,
-      frameHeight: frameSize,
-    });
-    this.load.spritesheet('player-death', playerDeathPng, {
-      frameWidth: frameSize,
-      frameHeight: frameSize,
-    });
-    this.load.spritesheet(DASH_TEXTURE_KEY, playerDashPng, {
+    this._loadSpriteSheet('player-jump', jumpPng, frameSize);
+    this._loadSpriteSheet('player-death', playerDeathPng, frameSize);
+    this._loadSpriteSheet(DASH_TEXTURE_KEY, playerDashPng, frameSize);
+  }
+
+  private _loadSpriteSheet(
+    key: string,
+    path: string,
+    frameSize: number
+  ): void {
+    this.load.spritesheet(key, path, {
       frameWidth: frameSize,
       frameHeight: frameSize,
     });
@@ -166,9 +182,20 @@ export class PreloadScene extends Phaser.Scene {
 
   private _createAnimations(): void {
     const player = PRELOAD_CONFIG.player;
-    this._createAnimation('jump-anim', 'player-jump', player.jump, player.repeat);
-    this._createAnimation('death-anim', 'player-death', player.death, player.repeat);
-    this._createAnimation(DASH_ANIM_KEY, DASH_TEXTURE_KEY, player.dash, player.repeat);
+    const { jump, death, dash, repeat } = player;
+    this._createAnimation('jump-anim', 'player-jump', jump, repeat);
+    this._createAnimation('death-anim', 'player-death', death, repeat);
+    this._createAnimation(DASH_ANIM_KEY, DASH_TEXTURE_KEY, dash, repeat);
+
+    this.anims.create({
+      key: FAN_ANIM_KEY,
+      frames: this.anims.generateFrameNumbers(FAN_TEXTURE_KEY, {
+        start: 0,
+        end: FAN_FRAME_COUNT - 1,
+      }),
+      frameRate: FAN_FRAME_RATE,
+      repeat: -1,
+    });
   }
 
   private _createAnimation(
@@ -201,7 +228,11 @@ export class PreloadScene extends Phaser.Scene {
     this._generateTexture(particles.speedLine);
   }
 
-  private _generateTexture(config: { key: string; width: number; height: number }): void {
+  private _generateTexture(config: {
+    key: string;
+    width: number;
+    height: number;
+  }): void {
     const particles = PRELOAD_CONFIG.particles;
     const g = this.add.graphics();
     g.fillStyle(particles.color, particles.alpha);

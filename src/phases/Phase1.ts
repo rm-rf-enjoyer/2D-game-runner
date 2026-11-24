@@ -1,100 +1,49 @@
 import Phaser from 'phaser';
-import { PIPE_CONFIG } from '../config/pipeConfig';
-import { ChunkDefinition, ChunkInstance, ChunkTemplate } from '../chunks/ChunkTemplate';
-import { PHASE1_JUMP_CHUNK } from '../chunks/phase1Chunks';
-import { PHASE1_JUMP_DASH_CHUNK } from '../chunks/phase1DashChunks';
+import { ChunkDefinition } from '../chunks/ChunkTemplate';
+import { Phase, PhaseOptions } from './Phase';
+import {
+  PHASE1_PIPE_40_NO_GAP_CHUNK,
+  PHASE1_PIPE_11_WITH_GAP_4_CHUNK,
+  PHASE1_PIPE_40_WITH_GAP_5_CHUNK
+} from '../chunks/phase1PipeChunks';
+import {
+  PHASE1_TILE_10_RAISED_3_CHUNK,
+  PHASE1_TILE_1_RAISED_3_WITH_GAP_6_CHUNK,
+  PHASE1_TILE_1_OFFSET_3_WITH_GAP_6_CHUNK,
+  PHASE1_TILE_6_RAISED_3_CHUNK,
+  PHASE1_TILE_12_WITH_FAN_AT_END_CHUNK,
+  PHASE1_TILE_12_WITH_FAN_CHUNK,
+  PHASE1_TILE_1_WITH_GAP_6_CHUNK,
+  PHASE1_TILE_12_WITH_GAP_5_CHUNK
+} from '../chunks/phase1TileChunks';
+import { repeat } from '../utils/common';
 
-export interface Phase1Options {
-  maxChunks?: number;
-  onComplete?: () => void;
-}
+export type Phase1Options = PhaseOptions;
 
-export class Phase1 {
-  public readonly platforms: Phaser.GameObjects.GameObject[] = [];
-  public nextX: number = PIPE_CONFIG.spawn.startX;
-
-  private readonly chunks: ChunkInstance[] = [];
-  private readonly sequence: ChunkDefinition[];
-  private readonly maxChunks: number;
-  private readonly onComplete?: () => void;
-  private spawnedChunks: number = 0;
-  private completed: boolean = false;
-
+export class Phase1 extends Phase {
   constructor(
-    private readonly scene: Phaser.Scene,
-    private readonly startY: number,
-    private readonly physicsGroup: Phaser.Physics.Arcade.StaticGroup,
+    scene: Phaser.Scene,
+    startY: number,
+    physicsGroup: Phaser.Physics.Arcade.StaticGroup,
     options: Phase1Options = {}
   ) {
-    this.maxChunks = options.maxChunks ?? 3;
-    this.onComplete = options.onComplete;
-    this.sequence = [
-      PHASE1_JUMP_CHUNK,
-      PHASE1_JUMP_CHUNK,
-      PHASE1_JUMP_CHUNK,
-      PHASE1_JUMP_DASH_CHUNK,
-      PHASE1_JUMP_DASH_CHUNK,
-      PHASE1_JUMP_DASH_CHUNK,
+    super(scene, startY, physicsGroup, Phase1._createSequence(), options);
+  }
+
+  private static _createSequence(): ChunkDefinition[] {
+    return [
+      PHASE1_PIPE_40_WITH_GAP_5_CHUNK,
+      ...repeat(PHASE1_PIPE_11_WITH_GAP_4_CHUNK, 2),
+      PHASE1_TILE_12_WITH_GAP_5_CHUNK,
+      ...repeat(PHASE1_TILE_1_WITH_GAP_6_CHUNK, 4),
+      PHASE1_PIPE_40_NO_GAP_CHUNK,
+      PHASE1_TILE_10_RAISED_3_CHUNK,
+      ...repeat(PHASE1_TILE_12_WITH_FAN_CHUNK, 2),
+      PHASE1_TILE_12_WITH_FAN_AT_END_CHUNK,
+      PHASE1_TILE_6_RAISED_3_CHUNK,
+      ...repeat(PHASE1_TILE_1_RAISED_3_WITH_GAP_6_CHUNK, 2),
+      PHASE1_TILE_1_OFFSET_3_WITH_GAP_6_CHUNK,
+      PHASE1_PIPE_40_WITH_GAP_5_CHUNK,
     ];
-  }
-
-  public init(): void {
-    this._fillAhead();
-  }
-
-  public update(shift: number): void {
-    this._moveChunks(shift);
-    this._removeOffscreenChunks();
-    this.nextX -= shift;
-    this._fillAhead();
-    this._checkCompletion();
-  }
-
-  protected _fillAhead(): void {
-    while (!this.completed && this.spawnedChunks < this.maxChunks) {
-      const definition = this.sequence[this.spawnedChunks % this.sequence.length];
-      this._spawnChunk(definition);
-    }
-  }
-
-  private _spawnChunk(definition: ChunkDefinition): void {
-    const chunk = ChunkTemplate.spawn(definition, {
-      scene: this.scene,
-      physicsGroup: this.physicsGroup,
-      startX: this.nextX,
-      baseY: this.startY,
-    });
-
-    this.chunks.push(chunk);
-    this.platforms.push(...chunk.platforms);
-    this.nextX = chunk.nextX;
-    this.spawnedChunks += 1;
-  }
-
-  private _moveChunks(shift: number): void {
-    this.chunks.forEach(chunk => chunk.update(shift));
-  }
-
-  private _removeOffscreenChunks(): void {
-    for (let index = this.chunks.length - 1; index >= 0; index--) {
-      const chunk = this.chunks[index];
-      if (!chunk.isOffscreen(PIPE_CONFIG.spawn.despawnMargin)) continue;
-
-      chunk.platforms.forEach(platform => {
-        const platformIndex = this.platforms.indexOf(platform);
-        if (platformIndex !== -1) this.platforms.splice(platformIndex, 1);
-      });
-      chunk.destroy();
-      this.chunks.splice(index, 1);
-    }
-  }
-
-  private _checkCompletion(): void {
-    if (this.completed) return;
-    if (this.spawnedChunks < this.maxChunks) return;
-    if (this.chunks.length > 0) return;
-
-    this.completed = true;
-    this.onComplete?.();
   }
 }

@@ -65,7 +65,10 @@ export class PlayerTrail {
 
   private _spawnPoint(): void {
     const { x: offsetX, y: offsetY } = TRAIL_CONFIG.motorOffset;
-    this.points.unshift({ x: this.sprite.x + offsetX, y: this.sprite.y + offsetY });
+    this.points.unshift({
+      x: this.sprite.x + offsetX,
+      y: this.sprite.y + offsetY
+    });
     if (this.points.length > TRAIL_CONFIG.maxPoints) {
       this.points.pop();
     }
@@ -83,7 +86,11 @@ export class PlayerTrail {
         TRAIL_CONFIG.baseThickness * (1 - i / this.points.length)
       );
 
-      this.graphics.lineStyle(thickness, TRAIL_CONFIG.color, TRAIL_CONFIG.alpha);
+      this.graphics.lineStyle(
+        thickness,
+        TRAIL_CONFIG.color,
+        TRAIL_CONFIG.alpha
+      );
       this.graphics.beginPath();
       this.graphics.moveTo(p1.x, p1.y);
       this.graphics.lineTo(p2.x, p2.y);

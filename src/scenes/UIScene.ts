@@ -1,16 +1,14 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config/gameConfig';
 import { MenuPanel } from '../objects/MenuPanel';
-import { createMenuButton } from '../objects/buttonFactory';
+import {
+  createMenuButtons,
+  MenuButtonConfig
+} from '../objects/buttonFactory';
+import { toggleSoundMuted } from '../utils/settings';
 
 const SCENES = { GAME: 'GameScene', UI: 'UIScene', MENU: 'MenuScene' };
 const SOUNDS = { UI: 'sfx-ui' };
-
-interface PauseButtonConfig {
-  text: string;
-  yOffset: number;
-  onClick: () => void;
-}
 
 export class UIScene extends Phaser.Scene {
   private pauseBtn!: Phaser.GameObjects.Image;
@@ -46,7 +44,8 @@ export class UIScene extends Phaser.Scene {
     this.scene.pause(SCENES.GAME);
     this.pauseBtn.setVisible(false);
 
-    this.pauseContainer = this.add.container(0, 0).setDepth(this.UI_CONFIG.pauseMenu.depth);
+    this.pauseContainer = this.add.container(0, 0)
+      .setDepth(this.UI_CONFIG.pauseMenu.depth);
     
     this._buildPausePanel();
     this._buildPauseButtons();
@@ -59,40 +58,45 @@ export class UIScene extends Phaser.Scene {
   private _buildPausePanel(): void {
     if (!this.pauseContainer) return;
     
-    const panel = new MenuPanel(
-      this, 
-      GAME_WIDTH / 2, 
-      GAME_HEIGHT / 2, 
-      this.UI_CONFIG.pauseMenu.panelTiles, 
-      this.UI_CONFIG.pauseMenu.panelTiles
-    );
-    this.pauseContainer.add(panel.container);
+    const panel = new MenuPanel({
+      scene: this,
+      centerX: GAME_WIDTH / 2,
+      centerY: GAME_HEIGHT / 2,
+      widthTiles: this.UI_CONFIG.pauseMenu.panelTiles,
+      heightTiles: this.UI_CONFIG.pauseMenu.panelTiles
+    });
+    this.pauseContainer.add(panel.getContainer());
   }
 
   private _buildPauseButtons(): void {
     if (!this.pauseContainer) return;
 
-    const buttonConfigs: PauseButtonConfig[] = [
+    const step = this.UI_CONFIG.buttons.step;
+    const configs: MenuButtonConfig[] = [
       { text: 'CONTINUE', yOffset: 0, onClick: () => this.closePause() },
-      { text: 'RECORDS', yOffset: this.UI_CONFIG.buttons.step, onClick: () => this._onRecords() },
-      { text: 'SOUND', yOffset: this.UI_CONFIG.buttons.step * 2, onClick: () => this._onSound() },
-      { text: 'MENU', yOffset: this.UI_CONFIG.buttons.step * 3, onClick: () => this.backToMenu() }
+      {
+        text: 'RECORDS',
+        yOffset: step,
+        onClick: () => this._onRecords()
+      },
+      {
+        text: 'SOUND',
+        yOffset: step * 2,
+        onClick: () => this._onSound()
+      },
+      {
+        text: 'MENU',
+        yOffset: step * 3,
+        onClick: () => this.backToMenu()
+      }
     ];
 
-    const cx = GAME_WIDTH / 2;
-
-    buttonConfigs.forEach(config => {
-      const btn = createMenuButton(
-        this, 
-        cx, 
-        this.UI_CONFIG.buttons.startY + config.yOffset, 
-        config.text, 
-        config.onClick
-      );
-      
-      this.pauseContainer?.add(btn.button.container);
-      this.pauseContainer?.add(btn.label);
-    });
+    createMenuButtons({
+      scene: this,
+      centerX: GAME_WIDTH / 2,
+      startY: this.UI_CONFIG.buttons.startY,
+      container: this.pauseContainer
+    }, configs);
   }
 
   public closePause(): void {
@@ -116,6 +120,6 @@ export class UIScene extends Phaser.Scene {
   }
 
   private _onSound(): void {
-    this.sound.mute = !this.sound.mute;
+    this.sound.mute = toggleSoundMuted(this.sound.mute);
   }
 }

@@ -1,11 +1,16 @@
 import Phaser from 'phaser';
 import paletteSource from '../assets/bg/palette.gpl?raw';
 import { WorldManager } from '../systems/WorldManager';
-import { ParallaxBackground } from '../objects/ParallaxBackground';
-import { GAME_WIDTH, GAME_HEIGHT, MUSIC_VOLUME, GAMEPLAY_CONFIG } from '../config/gameConfig';
-import { Player } from '../objects/player';
-import { Foreground } from '../objects/Foreground';
+import { Scenery, SceneryState } from '../objects/Scenery';
+import {
+  GAME_WIDTH,
+  GROUND_Y,
+  MUSIC_VOLUME,
+  GAMEPLAY_CONFIG
+} from '../config/gameConfig';
+import { Player } from '../objects/Player';
 import { DeathCause, PLAYER_CONFIG } from '../config/playerConfig';
+import { UIScene } from './UIScene';
 
 interface PuddleShape {
   dx: number;
@@ -22,7 +27,12 @@ const paletteColors: number[] = paletteSource
   .split('\n')
   .map(line => line.match(PALETTE_COLOR_PATTERN))
   .filter((match): match is RegExpMatchArray => match !== null)
-  .map(match => (Number(match[1]) << 16) | (Number(match[2]) << 8) | Number(match[3]));
+  .map(match => {
+    const red = Number(match[1]);
+    const green = Number(match[2]);
+    const blue = Number(match[3]);
+    return (red << 16) | (green << 8) | blue;
+  });
 
 const BLOOD_RED_COLOR = paletteColors[BLOOD_RED_INDEX];
 const BLOOD_DARK_COLOR = paletteColors[BLOOD_DARK_INDEX];
@@ -42,6 +52,15 @@ const BLOOD_EFFECT_CONFIG = {
     gravityY: 800,
     scale: 1,
     depth: 10,
+  },
+  puddleParticles: {
+    lifespan: 700,
+    speedX: { min: -25, max: 25 },
+    speedY: { min: -10, max: 20 },
+    gravityY: 300,
+    scale: 3,
+    countPerShape: 8,
+    cleanupDelay: 100,
   },
   puddle: {
     depth: 3,
@@ -64,11 +83,11 @@ export class GameScene extends Phaser.Scene {
   private isDead: boolean = false;
   private distance: number = 0;
   private finalDistance: number = 0;
+  private jumpPointerId: number | null = null;
 
   private world!: WorldManager;
   private player!: Player;
-  private bg!: ParallaxBackground;
-  private fg!: Foreground;
+  private scenery!: Scenery;
   private music!: Phaser.Sound.BaseSound;
   private scoreText!: Phaser.GameObjects.BitmapText;
 
@@ -76,7 +95,7 @@ export class GameScene extends Phaser.Scene {
     super('GameScene');
   }
 
-  public create(): void {
+  public create(data: { scenery?: SceneryState } = {}): void {
     this.isDead = false;
     this.distance = 0;
 
@@ -87,7 +106,7 @@ export class GameScene extends Phaser.Scene {
     this._setupPlayer();
     this._setupCollisions();
     this._setupInput();
-    this._setupBackgrounds();
+    this._setupScenery(data.scenery);
     this._setupAudio();
     this._setupUI();
     this._setupEvents();
@@ -108,13 +127,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private _setupPlayer(): void {
-    const groundTopY = GAME_HEIGHT - GAMEPLAY_CONFIG.groundOffset;
-    this.player = new Player(
-      this,
-      GAMEPLAY_CONFIG.playerStartX,
-      groundTopY - GAMEPLAY_CONFIG.playerYOffset,
-      GAMEPLAY_CONFIG.worldSpeed
-    );
+    this.player = new Player({
+      scene: this,
+      x: GAMEPLAY_CONFIG.playerStartX,
+      y: GROUND_Y - GAMEPLAY_CONFIG.playerYOffset,
+      getWorldSpeed: () => this.world.speed
+    });
   }
 
   private _setupCollisions(): void {
@@ -122,33 +140,50 @@ export class GameScene extends Phaser.Scene {
   }
 
   private _setupInput(): void {
+    this.jumpPointerId = null;
+
+    const tryDash = () => {
+      if (this.world.triggerDash()) {
+        this.player.dash();
+      }
+    };
+
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.x < GAME_WIDTH * GAMEPLAY_CONFIG.input.splitRatio) {
-        this.player.jump();
+      const split = GAME_WIDTH * GAMEPLAY_CONFIG.input.splitRatio;
+      if (pointer.x < split) {
+        this.jumpPointerId = pointer.id;
+        this.player.pressJump();
         return;
       }
 
-      if (this.world.triggerDash()) {
-        this.player.dash();
-      }
+      tryDash();
     });
 
-    this.input.keyboard?.on('keydown-SPACE', () => this.player.jump());
-    this.input.keyboard?.on('keydown-SHIFT', () => {
-      if (this.world.triggerDash()) {
-        this.player.dash();
+    const releaseJumpPointer = (pointer: Phaser.Input.Pointer) => {
+      if (pointer.id === this.jumpPointerId) {
+        this.jumpPointerId = null;
+        this.player.releaseJump();
       }
-    });
+    };
+
+    this.input.on('pointerup', releaseJumpPointer);
+    this.input.on('pointerupoutside', releaseJumpPointer);
+
+    this.input.keyboard?.on('keydown-SPACE', () => this.player.pressJump());
+    this.input.keyboard?.on('keyup-SPACE', () => this.player.releaseJump());
+    this.input.keyboard?.on('keydown-SHIFT', tryDash);
   }
 
-  private _setupBackgrounds(): void {
-    this.bg = new ParallaxBackground(this);
-    this.fg = new Foreground(this);
+  private _setupScenery(state?: SceneryState): void {
+    this.scenery = new Scenery(this, 'game', state);
   }
 
   private _setupAudio(): void {
     this.sound.stopByKey('music-menu');
-    this.music = this.sound.add('music-game', { loop: true, volume: MUSIC_VOLUME });
+    this.music = this.sound.add('music-game', {
+      loop: true,
+      volume: MUSIC_VOLUME
+    });
     this.music.play();
   }
 
@@ -181,8 +216,7 @@ export class GameScene extends Phaser.Scene {
 
   private _updateEntities(delta: number): void {
     this.world.update(delta);
-    this.bg.update(delta, this.world.speed);
-    this.fg.update(delta, this.world.speed);
+    this.scenery.update(delta, this.world.speed);
     this.player.update(delta);
   }
 
@@ -196,11 +230,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private _handlePitFall(): void {
-    const groundTopY = GAME_HEIGHT - GAMEPLAY_CONFIG.groundOffset;
     const playerHalfHeight = PLAYER_CONFIG.bodySize.height / 2;
     const playerBottomY = this.player.sprite.y + playerHalfHeight;
 
-    if (playerBottomY > groundTopY + GAMEPLAY_CONFIG.pitFallTolerance) {
+    if (playerBottomY > GROUND_Y + GAMEPLAY_CONFIG.pitFallTolerance) {
       this.finalDistance = this.distance;
       this._onHit('pit');
     }
@@ -209,12 +242,16 @@ export class GameScene extends Phaser.Scene {
   private _updateScore(currentSpeed: number, delta: number): void {
     const seconds = delta / GAMEPLAY_CONFIG.msPerSecond;
     this.distance += (currentSpeed * seconds) / GAMEPLAY_CONFIG.pixelsPerMeter;
-    this.scoreText.setText(Math.floor(this.distance) + ' m');
+    this._renderScore(this.distance);
+  }
+
+  private _renderScore(distance: number): void {
+    this.scoreText.setText(Math.floor(distance) + ' m');
   }
 
   private _handleLevelComplete(): void {
     if (this.isDead) return;
-    this.scene.start('MenuScene');
+    this._goToMenu();
   }
 
   private _onHit(cause: DeathCause): void {
@@ -223,11 +260,14 @@ export class GameScene extends Phaser.Scene {
 
     this._stopGameplay();
     this.player.die(cause);
-    this.scoreText.setText(Math.floor(this.finalDistance) + ' m');
+    this._renderScore(this.finalDistance);
 
     this._spawnBloodEffect();
     if (cause === 'obstacle') {
-      this._scheduleBloodPuddle();
+      this._scheduleWhileDead(() => this._drawBloodPuddle());
+    }
+    if (cause === 'object') {
+      this._scheduleWhileDead(() => this._spawnBloodPuddleEffect());
     }
 
     this.time.delayedCall(DEATH_CONFIG.restartDelay, () => this._restartGame());
@@ -236,8 +276,8 @@ export class GameScene extends Phaser.Scene {
   private _stopGameplay(): void {
     this.sound.play('sfx-death', { volume: DEATH_CONFIG.soundVolume });
     this.input.removeAllListeners('pointerdown');
-    this.input.keyboard?.removeAllListeners('keydown-SPACE');
-    this.input.keyboard?.removeAllListeners('keydown-SHIFT');
+    const keys = ['keydown-SPACE', 'keydown-SHIFT'];
+    keys.forEach(key => this.input.keyboard?.removeAllListeners(key));
     this.music.stop();
   }
 
@@ -263,19 +303,53 @@ export class GameScene extends Phaser.Scene {
     blood.explode(BLOOD_EFFECT_CONFIG.particleCount);
   }
 
-  private _scheduleBloodPuddle(): void {
+  private _scheduleWhileDead(callback: () => void): void {
     this.time.delayedCall(BLOOD_EFFECT_CONFIG.puddleDelay, () => {
       if (!this.isDead) return;
-      this._drawBloodPuddle();
+      callback();
     });
+  }
+
+  private _getBloodOrigin(): { x: number; y: number } {
+    const puddle = BLOOD_EFFECT_CONFIG.puddle;
+    return {
+      x: Math.round(this.player.sprite.x),
+      y: Math.round(this.player.sprite.y + puddle.yOffset),
+    };
+  }
+
+  private _spawnBloodPuddleEffect(): void {
+    const puddle = BLOOD_EFFECT_CONFIG.puddle;
+    const settings = BLOOD_EFFECT_CONFIG.puddleParticles;
+    const origin = this._getBloodOrigin();
+    const blood = this.add.particles(origin.x, origin.y, 'pixel-particle', {
+      lifespan: settings.lifespan,
+      speedX: settings.speedX,
+      speedY: settings.speedY,
+      gravityY: settings.gravityY,
+      scale: settings.scale,
+      tint: [BLOOD_RED_COLOR, BLOOD_DARK_COLOR],
+      emitting: false,
+      roundPixels: true,
+    }).setDepth(puddle.depth);
+
+    [...puddle.red, ...puddle.dark].forEach(shape => {
+      blood.explode(
+        settings.countPerShape,
+        origin.x + shape.dx + shape.width / 2,
+        origin.y + shape.dy + shape.height / 2
+      );
+    });
+
+    this.time.delayedCall(
+      settings.lifespan + settings.cleanupDelay,
+      () => blood.destroy()
+    );
   }
 
   private _drawBloodPuddle(): void {
     const puddle = BLOOD_EFFECT_CONFIG.puddle;
-    const origin = {
-      x: Math.round(this.player.sprite.x),
-      y: Math.round(this.player.sprite.y + puddle.yOffset),
-    };
+    const origin = this._getBloodOrigin();
     const graphics = this.add.graphics().setDepth(puddle.depth);
 
     this._fillPuddleShapes(graphics, origin, puddle.red, BLOOD_RED_COLOR);
@@ -299,9 +373,13 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  private _goToMenu(): void {
+    this.scene.start('MenuScene', { scenery: this.scenery.getState() });
+  }
+
   private _restartGame(): void {
     this.scene.stop('UIScene');
-    this.scene.start('MenuScene');
+    this._goToMenu();
   }
 
   private _onAppPaused(): void {
@@ -310,8 +388,8 @@ export class GameScene extends Phaser.Scene {
     if (this.scene.isActive('GameScene')) {
       this.scene.pause('GameScene');
       const uiScene = this.scene.get('UIScene');
-      if (uiScene && (uiScene as any).openPause) {
-        (uiScene as any).openPause();
+      if (uiScene instanceof UIScene) {
+        uiScene.openPause();
       }
     }
   }

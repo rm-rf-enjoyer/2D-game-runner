@@ -12,6 +12,13 @@ import { PlayerTrail } from './player/PlayerTrail';
 
 const SPRITE_CONFIG = { scale: 1, depth: 5 };
 
+export interface PlayerOptions {
+  scene: Phaser.Scene;
+  x: number;
+  y: number;
+  getWorldSpeed?: () => number;
+}
+
 export class Player {
   public sprite: Phaser.Physics.Arcade.Sprite;
   public isDead: boolean = false;
@@ -22,20 +29,30 @@ export class Player {
 
   private isJumping: boolean = false;
   private justJumped: boolean = false;
+  private jumpHeld: boolean = false;
   private isDashing: boolean = false;
   private textureBeforeDash: string = 'player';
 
   private readonly effects: PlayerEffects;
   private readonly hover: PlayerHover;
   private readonly trail: PlayerTrail;
+  private readonly getWorldSpeed: () => number;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, speed: number) {
-    this.scene = scene;
-    this.baseX = x;
-    this.baseY = y;
+  constructor(options: PlayerOptions) {
+    this.scene = options.scene;
+    this.baseX = options.x;
+    this.baseY = options.y;
+    this.getWorldSpeed = options.getWorldSpeed
+      ?? (() => GAMEPLAY_CONFIG.worldSpeed);
 
-    this.sprite = this.scene.physics.add.sprite(x, y, 'player');
+    this.sprite = this.scene.physics.add.sprite(
+      options.x,
+      options.y,
+      'player'
+    );
     this.setupPhysics();
+
+    const scene = options.scene;
     this.effects = new PlayerEffects(scene, this.sprite);
     this.hover = new PlayerHover(
       scene,
@@ -45,8 +62,17 @@ export class Player {
     this.trail = new PlayerTrail(scene, this.sprite);
   }
 
+  public pressJump(): void {
+    this.jumpHeld = true;
+    this.jump();
+  }
+
+  public releaseJump(): void {
+    this.jumpHeld = false;
+  }
+
   public jump(): void {
-    if (this.isJumping || !this.isOnGround()) return;
+    if (this.isDead || this.isJumping || !this.isOnGround()) return;
 
     this.resetHoverAndPosition();
     this.sprite.setVelocityY(PLAYER_CONFIG.jumpVelocity);
@@ -83,6 +109,10 @@ export class Player {
     this.sprite.anims.stop();
     this.sprite.setTexture('player');
     this.effects.emitDust();
+
+    if (this.jumpHeld) {
+      this.jump();
+    }
   }
 
   public die(cause: DeathCause = 'pit'): void {
@@ -103,8 +133,7 @@ export class Player {
   }
 
   public update(delta: number): void {
-    const worldSpeed = (this.scene as any).world?.speed
-      || GAMEPLAY_CONFIG.worldSpeed;
+    const worldSpeed = this.getWorldSpeed();
     const seconds = delta / GAMEPLAY_CONFIG.msPerSecond;
     this.trail.update(worldSpeed * seconds);
 
@@ -124,9 +153,8 @@ export class Player {
     this.sprite.setGravityY(PLAYER_CONFIG.gravityY);
 
     const { width, height } = PLAYER_CONFIG.bodySize;
-    const { x, y } = PLAYER_CONFIG.bodyOffset;
     this.sprite.body.setSize(width, height);
-    this.sprite.body.setOffset(x, y);
+    this._resetBodyOffset();
     this.sprite.setMaxVelocity(
       PLAYER_CONFIG.maxVelocityX,
       PLAYER_CONFIG.maxVelocityY
@@ -141,9 +169,13 @@ export class Player {
   private resetHoverAndPosition(): void {
     this.sprite.x = this.baseX;
     this.sprite.y = Math.round(this.sprite.y);
+    this._resetBodyOffset();
+    this.hover.reset();
+  }
+
+  private _resetBodyOffset(): void {
     const { x, y } = PLAYER_CONFIG.bodyOffset;
     this.sprite.body.setOffset(x, y);
-    this.hover.reset();
   }
 
   private endDash(): void {
