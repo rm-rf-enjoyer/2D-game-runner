@@ -1,16 +1,18 @@
 import Phaser from 'phaser';
-import { Scenery, SceneryState } from '../objects/Scenery';
-import { MenuPanel } from '../objects/MenuPanel';
-import { Rain } from '../objects/Rain';
-import { GAME_WIDTH, GAME_HEIGHT, MUSIC_VOLUME } from '../config/gameConfig';
-import { WORLD_INITIAL_SPEED } from '../config/worldConfig';
-import { createMenuButtons, MenuButtonConfig } from '../objects/buttonFactory';
-import { toggleSoundMuted } from '../utils/settings';
+import { Scenery, SceneryState } from '../objects/Scenery.ts';
+import { MenuPanel } from '../objects/MenuPanel.ts';
+import { Rain } from '../objects/Rain.ts';
+import { GAME_WIDTH, GAME_HEIGHT, MUSIC_VOLUME } from '../config/gameConfig.ts';
+import { SCENE_KEYS } from '../config/sceneKeys.ts';
+import { ASSET_KEYS } from '../config/assetKeys.ts';
+import { WORLD_INITIAL_SPEED } from '../config/worldConfig.ts';
+import { createMenuButtons, MenuButtonConfig } from '../objects/buttonFactory.ts';
+import { toggleSoundMuted } from '../utils/settings.ts';
 
 const PANEL_TILES = 6;
 const BTN_START_Y = 95;
 const BTN_STEP = 40;
-const MENU_MUSIC_KEY = 'music-menu';
+const MENU_MUSIC_KEY = ASSET_KEYS.audio.menuMusic;
 
 export class MenuScene extends Phaser.Scene {
   private scenery!: Scenery;
@@ -19,7 +21,7 @@ export class MenuScene extends Phaser.Scene {
   private music?: Phaser.Sound.BaseSound;
 
   constructor() {
-    super('MenuScene');
+    super(SCENE_KEYS.MENU);
   }
 
   public create(data: { scenery?: SceneryState } = {}): void {
@@ -48,13 +50,8 @@ export class MenuScene extends Phaser.Scene {
     const configs: MenuButtonConfig[] = [
       { text: 'PLAY', yOffset: 0, onClick: () => this.handlePlay() },
       {
-        text: 'RECORDS',
-        yOffset: BTN_STEP,
-        onClick: () => this.handleRecords(),
-      },
-      {
         text: 'SOUND',
-        yOffset: BTN_STEP * 2,
+        yOffset: BTN_STEP,
         onClick: () => this.handleSound(),
       },
     ];
@@ -89,8 +86,8 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private setupEvents(): void {
-    if (this.scene.isActive('UIScene')) {
-      this.scene.stop('UIScene');
+    if (this.scene.isActive(SCENE_KEYS.UI)) {
+      this.scene.stop(SCENE_KEYS.UI);
     }
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -99,13 +96,9 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private handlePlay(): void {
-    this.scene.start('GameScene', {
+    this.scene.start(SCENE_KEYS.GAME, {
       scenery: this.scenery.getState(),
     });
-  }
-
-  private handleRecords(): void {
-    console.log('Opening Global Leaderboard...');
   }
 
   private handleSound(): void {

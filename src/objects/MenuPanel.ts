@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ASSET_KEYS } from '../config/assetKeys.ts';
 
 const TILE_SIZE = 32;
 const DEFAULT_TILES = 6;
@@ -32,7 +33,7 @@ export class MenuPanel {
 
     for (let row = 0; row < heightTiles; row++) {
       for (let col = 0; col < widthTiles; col++) {
-        const key = this._getTileKey(row, col, widthTiles, heightTiles);
+        const key = this._getTileKey(row, col, heightTiles, widthTiles);
         const x = startX + col * TILE_SIZE;
         const y = startY + row * TILE_SIZE;
         this.root.add(options.scene.add.image(x, y, key));
@@ -53,10 +54,10 @@ export class MenuPanel {
     this.root.destroy();
   }
 
-  private _getTileKey(row: number, col: number, maxRows: number, maxCols: number): string {
-    const rowType = getEdgeType(row, maxRows - 1);
-    const colType = getEdgeType(col, maxCols - 1);
+  private _getTileKey(row: number, col: number, rows: number, cols: number): string {
+    const rowType = getEdgeType(row, rows - 1);
+    const colType = getEdgeType(col, cols - 1);
     const index = rowType * 3 + colType + 1;
-    return `menu-${index}`;
+    return ASSET_KEYS.texture.menu(index);
   }
 }

@@ -1,10 +1,15 @@
 import Phaser from 'phaser';
-import { PLATFORM_TILE_SIZE } from '../config/platforms';
-import { FanObject } from '../objects/FanObject';
-import { PipePlatform } from '../objects/platforms/PipePlatform';
-import type { ChunkDefinition, ChunkObjectDef, ChunkPlatformDef } from './types';
+import { PLATFORM_TILE_SIZE } from '../config/platforms/index.ts';
+import { FanObject } from '../objects/FanObject.ts';
+import { PipePlatform } from '../objects/platforms/PipePlatform.ts';
+import type { ChunkDefinition, ChunkObjectDef, ChunkPlatformDef } from './types.ts';
 
-export type { ChunkDefinition, ChunkObjectDef, ChunkObjectType, ChunkPlatformDef } from './types';
+export type {
+  ChunkDefinition,
+  ChunkObjectDef,
+  ChunkObjectType,
+  ChunkPlatformDef,
+} from './types.ts';
 
 export interface ChunkSpawnContext {
   scene: Phaser.Scene;

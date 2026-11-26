@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PLATFORM_TILE_SIZE, PlatformConfig } from '../config/platforms';
+import { PLATFORM_TILE_SIZE, PlatformConfig } from '../config/platforms/index.ts';
 
 export interface PipeSegmentOptions {
   tileCount: number;

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { getPaletteColor } from '../../config/palette';
+import { getPaletteColor } from '../../config/palette.ts';
 
 interface TrailPoint {
   x: number;

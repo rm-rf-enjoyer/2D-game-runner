@@ -1,7 +1,13 @@
 import Phaser from 'phaser';
-import { GAME_HEIGHT, GAME_WIDTH } from './gameConstants';
+import { GAME_HEIGHT, GAME_WIDTH } from './gameConstants.ts';
 
-export { GAME_HEIGHT, GAME_WIDTH, GAMEPLAY_CONFIG, GROUND_Y, MUSIC_VOLUME } from './gameConstants';
+export {
+  GAME_HEIGHT,
+  GAME_WIDTH,
+  GAMEPLAY_CONFIG,
+  GROUND_Y,
+  MUSIC_VOLUME,
+} from './gameConstants.ts';
 
 const GAME_GRAVITY_Y = 1000;
 

@@ -1,3 +1,5 @@
+import { EVENT_KEYS } from '../config/eventKeys.ts';
+
 export type PauseReason = 'visibility' | 'focus' | 'native';
 
 export interface PausableEngine {
@@ -11,7 +13,7 @@ export interface LifecycleScheduler {
   clearTimeout(handle: unknown): void;
 }
 
-const PAUSE_EVENT = 'app-paused';
+const PAUSE_EVENT = EVENT_KEYS.appPaused;
 const SUSPEND_DELAY_MS = 50;
 
 const defaultScheduler: LifecycleScheduler = {

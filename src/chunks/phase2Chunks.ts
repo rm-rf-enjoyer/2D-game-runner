@@ -1,5 +1,5 @@
-import { ChunkTemplate } from './ChunkTemplate';
-import type { ChunkDefinition } from './types';
+import { ChunkTemplate } from './ChunkTemplate.ts';
+import type { ChunkDefinition } from './types.ts';
 
 export function createPhase2Pipe20Chunk(yTiles: number): ChunkDefinition {
   return ChunkTemplate.create({

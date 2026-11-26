@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { getTextureSize } from '../utils/common';
+import { ASSET_KEYS } from '../config/assetKeys.ts';
+import { getTextureSize } from '../utils/common.ts';
 
 export interface ButtonConfig {
   scene: Phaser.Scene;
@@ -33,20 +34,29 @@ export class Button {
 
     this.container = this.scene.add.container(x, y);
 
-    const leftW = getTextureSize(this.scene, 'btn-normal-left').width;
-    const rightW = getTextureSize(this.scene, 'btn-normal-right').width;
+    const textures = ASSET_KEYS.texture;
+    const leftW = getTextureSize(this.scene, textures.button('normal', 'left')).width;
+    const rightW = getTextureSize(this.scene, textures.button('normal', 'right')).width;
     const centerW = Math.round(width - leftW - rightW);
 
-    this.left = this._createSideImage('btn-normal-left', -width / 2 + leftW / 2);
-    this.center = this.scene.add.tileSprite(0, 0, centerW, height, 'btn-normal-center');
-    this.right = this._createSideImage('btn-normal-right', width / 2 - rightW / 2);
+    this.left = this._createSideImage(textures.button('normal', 'left'), -width / 2 + leftW / 2);
+    this.center = this.scene.add.tileSprite(
+      0,
+      0,
+      centerW,
+      height,
+      textures.button('normal', 'center')
+    );
+    this.right = this._createSideImage(textures.button('normal', 'right'), width / 2 - rightW / 2);
 
     this.container.add([this.left, this.center, this.right]);
 
     this.hitArea = this.scene.add
-      .zone(x, y, width, height)
+      .zone(0, 0, width, height)
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
+
+    this.container.add(this.hitArea);
 
     this.hitArea.on('pointerdown', () => this._press());
     this.hitArea.on('pointerup', () => this._release(true));
@@ -62,7 +72,7 @@ export class Button {
     this.isPressed = true;
 
     this._setTextureSet('pressed');
-    this.scene.sound.play('sfx-click', { volume: 1 });
+    this.scene.sound.play(ASSET_KEYS.audio.click, { volume: 1 });
   }
 
   private _release(invoke: boolean): void {
@@ -77,9 +87,10 @@ export class Button {
   }
 
   private _setTextureSet(state: 'normal' | 'pressed'): void {
-    this.left.setTexture(`btn-${state}-left`);
-    this.center.setTexture(`btn-${state}-center`);
-    this.right.setTexture(`btn-${state}-right`);
+    const textures = ASSET_KEYS.texture;
+    this.left.setTexture(textures.button(state, 'left'));
+    this.center.setTexture(textures.button(state, 'center'));
+    this.right.setTexture(textures.button(state, 'right'));
   }
 
   public setDepth(depth: number): this {

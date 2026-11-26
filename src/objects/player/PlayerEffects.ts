@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { PLAYER_PALETTE } from '../../config/playerConfig';
+import { ASSET_KEYS } from '../../config/assetKeys.ts';
+import { PLAYER_PALETTE } from '../../config/playerConfig.ts';
 
 interface SpeedRange {
   min: number;
@@ -103,7 +104,7 @@ export class PlayerEffects {
     this.sprite = sprite;
     this.wheels = WHEEL_OFFSETS.map((offset) =>
       scene.add
-        .particles(0, 0, 'pixel-particle', {
+        .particles(0, 0, ASSET_KEYS.texture.pixel, {
           ...HOVER_DIRT_CONFIG,
           follow: sprite,
           followOffset: offset,
@@ -129,7 +130,7 @@ export class PlayerEffects {
   }
 
   private _playSound(): void {
-    this.scene.sound.play('sfx-dash', SOUND_SETTINGS);
+    this.scene.sound.play(ASSET_KEYS.audio.dash, SOUND_SETTINGS);
   }
 
   public stopExhaust(): void {
@@ -138,7 +139,7 @@ export class PlayerEffects {
 
   public emitDust(): void {
     const dust = this.scene.add
-      .particles(this.sprite.x, this.sprite.y + DUST_CONFIG.yOffset, 'pixel-particle', {
+      .particles(this.sprite.x, this.sprite.y + DUST_CONFIG.yOffset, ASSET_KEYS.texture.pixel, {
         ...LANDING_DUST_CONFIG,
         emitting: false,
       })

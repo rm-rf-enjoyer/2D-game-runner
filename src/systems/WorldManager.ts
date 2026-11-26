@@ -16,9 +16,13 @@ export interface WorldPhase {
 export class WorldManager {
   private readonly speedController = new SpeedController();
   private readonly phases: readonly WorldPhase[];
+  private readonly walls: AABB[] = [];
+  private readonly objects: AABB[] = [];
+  private readonly boundsCache = new WeakMap<BoundedEntity, AABB>();
 
   constructor(phases: readonly WorldPhase[]) {
     this.phases = phases;
+    this.rebuildCollisionBounds();
   }
 
   public get speed(): number {
@@ -34,19 +38,36 @@ export class WorldManager {
   }
 
   public getWallCollisionCause(player: AABB): DeathCause | null {
-    const walls = this.phases.flatMap((phase) =>
-      phase.platforms.map((platform) => rectToAabb(platform.getBounds()))
-    );
-    const objects = this.phases.flatMap((phase) =>
-      phase.objects.map((object) => rectToAabb(object.getBounds()))
-    );
-
-    return findWallCollisionCause(player, walls, objects);
+    return findWallCollisionCause(player, this.walls, this.objects);
   }
 
   public update(delta: number): void {
     this.speedController.update(delta);
     const shift = this.speedController.calculateShift(delta);
     this.phases.forEach((phase) => phase.update(shift));
+    this.rebuildCollisionBounds();
+  }
+
+  private rebuildCollisionBounds(): void {
+    this.walls.length = 0;
+    this.objects.length = 0;
+
+    this.phases.forEach((phase) => {
+      phase.platforms.forEach((platform) => this.walls.push(this.toAabb(platform)));
+      phase.objects.forEach((object) => this.objects.push(this.toAabb(object)));
+    });
+  }
+
+  private toAabb(entity: BoundedEntity): AABB {
+    const bounds = entity.getBounds();
+    const cached = this.boundsCache.get(entity);
+
+    if (cached) {
+      return rectToAabb(bounds, cached);
+    }
+
+    const aabb = rectToAabb(bounds);
+    this.boundsCache.set(entity, aabb);
+    return aabb;
   }
 }

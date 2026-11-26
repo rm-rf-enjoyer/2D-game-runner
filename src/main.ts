@@ -4,19 +4,29 @@ import { App } from '@capacitor/app';
 import { StatusBar } from '@capacitor/status-bar';
 import { ScrollbarHider } from 'capacitor-scrollbar-hider';
 
-import { createGameConfig } from './config/gameConfig';
-import { BootScene } from './scenes/BootScene';
-import { PreloadScene } from './scenes/PreloadScene';
-import { MenuScene } from './scenes/MenuScene';
-import { GameScene } from './scenes/GameScene';
-import { UIScene } from './scenes/UIScene';
-import { AppLifecycle } from './systems/AppLifecycle';
+import { createGameConfig } from './config/gameConfig.ts';
+import { BootScene } from './scenes/BootScene.ts';
+import { PreloadScene } from './scenes/PreloadScene.ts';
+import { MenuScene } from './scenes/MenuScene.ts';
+import { GameScene } from './scenes/game/GameScene.ts';
+import { UIScene } from './scenes/UIScene.ts';
+import { AppLifecycle } from './systems/AppLifecycle.ts';
+
+declare global {
+  interface Window {
+    __game?: Phaser.Game;
+  }
+}
 
 ScrollbarHider.hideScrollbars();
 
 const game = new Phaser.Game(
   createGameConfig([BootScene, PreloadScene, MenuScene, GameScene, UIScene])
 );
+
+if (import.meta.env.DEV) {
+  window.__game = game;
+}
 
 if (Capacitor.isNativePlatform()) {
   StatusBar.hide();

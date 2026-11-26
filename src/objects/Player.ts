@@ -1,10 +1,16 @@
 import Phaser from 'phaser';
-import { GAMEPLAY_CONFIG } from '../config/gameConfig';
-import { PLAYER_CONFIG, DeathCause, DASH_TEXTURE_KEY, DASH_ANIM_KEY } from '../config/playerConfig';
-import { WORLD_INITIAL_SPEED } from '../config/worldConfig';
-import { PlayerEffects } from './player/PlayerEffects';
-import { PlayerHover } from './player/PlayerHover';
-import { PlayerTrail } from './player/PlayerTrail';
+import { GAMEPLAY_CONFIG } from '../config/gameConfig.ts';
+import { ASSET_KEYS } from '../config/assetKeys.ts';
+import {
+  PLAYER_CONFIG,
+  DeathCause,
+  DASH_TEXTURE_KEY,
+  DASH_ANIM_KEY,
+} from '../config/playerConfig.ts';
+import { WORLD_INITIAL_SPEED } from '../config/worldConfig.ts';
+import { PlayerEffects } from './player/PlayerEffects.ts';
+import { PlayerHover } from './player/PlayerHover.ts';
+import { PlayerTrail } from './player/PlayerTrail.ts';
 
 const SPRITE_CONFIG = { scale: 1, depth: 5 };
 
@@ -27,7 +33,7 @@ export class Player {
   private justJumped: boolean = false;
   private jumpHeld: boolean = false;
   private isDashing: boolean = false;
-  private textureBeforeDash: string = 'player';
+  private textureBeforeDash: string = ASSET_KEYS.texture.player;
 
   private readonly effects: PlayerEffects;
   private readonly hover: PlayerHover;
@@ -39,7 +45,7 @@ export class Player {
     this.baseX = options.x;
     this.getWorldSpeed = options.getWorldSpeed ?? (() => WORLD_INITIAL_SPEED);
 
-    this.sprite = this.scene.physics.add.sprite(options.x, options.y, 'player');
+    this.sprite = this.scene.physics.add.sprite(options.x, options.y, ASSET_KEYS.texture.player);
 
     const body = this.sprite.body;
     if (!(body instanceof Phaser.Physics.Arcade.Body)) {
@@ -79,8 +85,8 @@ export class Player {
     this.justJumped = true;
 
     this.effects.playJumpSound();
-    this.sprite.setTexture('player-jump');
-    this.sprite.play('jump-anim');
+    this.sprite.setTexture(ASSET_KEYS.texture.playerJump);
+    this.sprite.play(ASSET_KEYS.animation.jump);
   }
 
   public dash(): void {
@@ -105,7 +111,7 @@ export class Player {
     this.resetHoverAndPosition();
 
     this.sprite.anims.stop();
-    this.sprite.setTexture('player');
+    this.sprite.setTexture(ASSET_KEYS.texture.player);
     this.effects.emitDust();
 
     if (this.jumpHeld) {
@@ -123,7 +129,7 @@ export class Player {
     this.body.enable = false;
 
     this.trail.clear();
-    this.sprite.play('death-anim');
+    this.sprite.play(ASSET_KEYS.animation.death);
 
     if (cause === 'pit' || cause === 'wall') {
       this.playDeathFallTween();
@@ -181,7 +187,7 @@ export class Player {
     this.sprite.anims.stop();
     this.sprite.setTexture(this.textureBeforeDash);
     if (this.isJumping) {
-      this.sprite.play('jump-anim');
+      this.sprite.play(ASSET_KEYS.animation.jump);
     }
   }
 

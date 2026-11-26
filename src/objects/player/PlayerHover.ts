@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PLAYER_CONFIG } from '../../config/playerConfig';
+import { PLAYER_CONFIG } from '../../config/playerConfig.ts';
 
 interface HoverStep {
   x?: number;

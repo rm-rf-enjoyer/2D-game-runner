@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { PIPE_CONFIG } from '../config/pipeConfig';
-import { getBodyBounds } from './common';
+import { PIPE_CONFIG } from '../config/pipeConfig.ts';
+import { getBodyBounds } from './common.ts';
 
 export type StaticCollider = Phaser.GameObjects.Rectangle;
 
@@ -24,9 +24,12 @@ export function syncStaticCollider(collider: StaticCollider): void {
   body.updateFromGameObject();
 }
 
-export function getStaticColliderBounds(collider: StaticCollider): Phaser.Geom.Rectangle {
+export function getStaticColliderBounds(
+  collider: StaticCollider,
+  target?: Phaser.Geom.Rectangle
+): Phaser.Geom.Rectangle {
   const body = collider.body as Phaser.Physics.Arcade.StaticBody;
-  return getBodyBounds(body);
+  return getBodyBounds(body, target);
 }
 
 export function destroyStaticCollider(

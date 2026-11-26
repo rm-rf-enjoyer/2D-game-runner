@@ -67,3 +67,21 @@ test('dash increases speed and respects cooldown', () => {
   world.update(WORLD_CONFIG.maxDelta);
   assert.ok(Math.abs(phase.shifts[0] - WORLD_CONFIG.dashSpeed * 0.05) < 1e-9);
 });
+
+test('collision bounds follow phase movement', () => {
+  const moved = { x: 100, y: 50, right: 200, bottom: 100 };
+  const phase: WorldPhase = {
+    platforms: [{ getBounds: () => moved }],
+    objects: [],
+    update(shift: number): void {
+      moved.x -= shift;
+      moved.right -= shift;
+    },
+  };
+  const world = new WorldManager([phase]);
+
+  world.update(WORLD_CONFIG.maxDelta);
+
+  const player = { left: moved.x + 5, top: 60, right: moved.x + 15, bottom: 70 };
+  assert.equal(world.getWallCollisionCause(player), 'wall');
+});

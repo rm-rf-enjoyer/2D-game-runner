@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { SceneMusic } from '../src/systems/SceneMusic.ts';
 import type { LoopSound, SceneSoundManager } from '../src/systems/SceneMusic.ts';
+import { ASSET_KEYS } from '../src/config/assetKeys.ts';
 
 function createSound() {
   const calls = { stop: 0, play: 0 };
@@ -27,18 +28,22 @@ function createManager(sounds: Map<string, LoopSound> = new Map()) {
   return { manager, calls, sounds };
 }
 
-const config = { key: 'music-game', volume: 0.5, stopKeys: ['music-menu'] };
+const config = {
+  key: ASSET_KEYS.audio.gameMusic,
+  volume: 0.5,
+  stopKeys: [ASSET_KEYS.audio.menuMusic],
+};
 
 test('start reuses an existing sound and stops the previous theme', () => {
   const { sound, calls: soundCalls } = createSound();
-  const sounds = new Map([['music-game', sound]]);
+  const sounds = new Map([[ASSET_KEYS.audio.gameMusic, sound]]);
   const { manager, calls } = createManager(sounds);
   const music = new SceneMusic(config);
 
   music.start(manager);
 
   assert.deepEqual(calls.add, []);
-  assert.deepEqual(calls.stopByKey, ['music-menu']);
+  assert.deepEqual(calls.stopByKey, [ASSET_KEYS.audio.menuMusic]);
   assert.equal(soundCalls.stop, 1);
   assert.equal(soundCalls.play, 1);
 });
@@ -48,17 +53,17 @@ test('recreating a scene does not duplicate the music object', () => {
   const music = new SceneMusic(config);
 
   music.start(manager);
-  const first = sounds.get('music-game');
+  const first = sounds.get(ASSET_KEYS.audio.gameMusic);
   music.start(manager);
 
-  assert.deepEqual(calls.add, ['music-game']);
-  assert.equal(sounds.get('music-game'), first);
+  assert.deepEqual(calls.add, [ASSET_KEYS.audio.gameMusic]);
+  assert.equal(sounds.get(ASSET_KEYS.audio.gameMusic), first);
   assert.equal([...sounds.keys()].length, 1);
 });
 
 test('stop is idempotent and start can be called again', () => {
   const { sound, calls: soundCalls } = createSound();
-  const { manager } = createManager(new Map([['music-game', sound]]));
+  const { manager } = createManager(new Map([[ASSET_KEYS.audio.gameMusic, sound]]));
   const music = new SceneMusic(config);
 
   music.start(manager);

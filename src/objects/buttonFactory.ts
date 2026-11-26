@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
-import { Button } from './Button';
-import { getTextureSize } from '../utils/common';
-import { getPaletteColor } from '../config/palette';
+import { Button } from './Button.ts';
+import { getTextureSize } from '../utils/common.ts';
+import { getPaletteColor } from '../config/palette.ts';
+import { ASSET_KEYS } from '../config/assetKeys.ts';
 
-const FONT_KEY = 'pixel-font';
+const FONT_KEY = ASSET_KEYS.texture.font;
 const FONT_SIZE = 14;
 const BUTTON_WIDTH = 120;
 const LABEL_TINT = getPaletteColor(14);
@@ -38,7 +39,7 @@ export interface MenuButtonsOptions {
 
 export function createMenuButton(config: MenuButtonOptions): MenuButtonReturn {
   const { scene, x, y, text, onClick } = config;
-  const texture = getTextureSize(scene, 'btn-normal-left');
+  const texture = getTextureSize(scene, ASSET_KEYS.texture.button('normal', 'left'));
 
   const button = new Button({
     scene,

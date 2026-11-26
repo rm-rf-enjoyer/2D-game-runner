@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { GAME_HEIGHT, GAME_WIDTH, GAMEPLAY_CONFIG } from '../config/gameConfig';
-import { getPaletteColor } from '../config/palette';
+import { GAME_HEIGHT, GAME_WIDTH, GAMEPLAY_CONFIG } from '../config/gameConfig.ts';
+import { getPaletteColor } from '../config/palette.ts';
 
 interface Range {
   min: number;

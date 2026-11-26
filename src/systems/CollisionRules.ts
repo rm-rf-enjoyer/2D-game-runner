@@ -15,13 +15,15 @@ export interface RectangleBounds {
   bottom: number;
 }
 
-export function rectToAabb(rect: RectangleBounds): AABB {
-  return {
-    left: rect.x,
-    top: rect.y,
-    right: rect.right,
-    bottom: rect.bottom,
-  };
+export function rectToAabb(
+  rect: RectangleBounds,
+  target: AABB = { left: 0, top: 0, right: 0, bottom: 0 }
+): AABB {
+  target.left = rect.x;
+  target.top = rect.y;
+  target.right = rect.right;
+  target.bottom = rect.bottom;
+  return target;
 }
 
 function intersects(a: AABB, b: AABB): boolean {

@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
-import { GAMEPLAY_CONFIG, GAME_WIDTH, GAME_HEIGHT } from '../config/gameConfig';
-import { WORLD_INITIAL_SPEED } from '../config/worldConfig';
-import { getTextureSize } from '../utils/common';
+import { GAMEPLAY_CONFIG, GAME_WIDTH, GAME_HEIGHT } from '../config/gameConfig.ts';
+import { ASSET_KEYS } from '../config/assetKeys.ts';
+import { WORLD_INITIAL_SPEED } from '../config/worldConfig.ts';
+import { getTextureSize } from '../utils/common.ts';
 
 const SCENERY_CONFIG = {
   defaultSpeed: WORLD_INITIAL_SPEED,
@@ -12,13 +13,17 @@ const SCENERY_CONFIG = {
     duration: 15000,
   },
   tileLayers: [
-    { key: 'bg1', speed: 0.05, depth: -40 },
-    { key: 'bg2', speed: 0.1, depth: -30 },
-    { key: 'bg4', speed: 0.2, depth: -10 },
+    { key: ASSET_KEYS.texture.background1, speed: 0.05, depth: -40 },
+    { key: ASSET_KEYS.texture.background2, speed: 0.1, depth: -30 },
+    { key: ASSET_KEYS.texture.background4, speed: 0.2, depth: -10 },
   ],
   imageLayers: [
-    { keys: ['bg5'], speed: 1, depth: -6 },
-    { keys: ['bg6a', 'bg6b'], speed: 1, depth: -2 },
+    { keys: [ASSET_KEYS.texture.background5], speed: 1, depth: -6 },
+    {
+      keys: [ASSET_KEYS.texture.background6a, ASSET_KEYS.texture.background6b],
+      speed: 1,
+      depth: -2,
+    },
   ],
   foreground: {
     baseSpeedMultiplier: 1.5,
@@ -134,7 +139,7 @@ export class Scenery {
     this.train = this._createTrain();
     this._scheduleTrain();
 
-    this.foreground = this._createTileSprite('foreground', depth.foreground);
+    this.foreground = this._createTileSprite(ASSET_KEYS.texture.foreground, depth.foreground);
     if (state) {
       this.foreground.tilePositionX = state.foregroundX;
       this.restoreTraffic(state.traffic);
@@ -248,7 +253,7 @@ export class Scenery {
 
   private _createTrain(): Phaser.GameObjects.Image {
     const train = this.scene.add
-      .image(0, GAME_HEIGHT / 2, 'bg3')
+      .image(0, GAME_HEIGHT / 2, ASSET_KEYS.texture.background3)
       .setDepth(SCENERY_CONFIG.trainDepth)
       .setVisible(false);
     train.x = GAME_WIDTH + train.displayWidth / 2;
@@ -379,7 +384,7 @@ export class Scenery {
   private _createTrafficObject(): TrafficObject {
     const config = SCENERY_CONFIG.foreground;
     const index = Phaser.Math.Between(config.trafficIndex.min, config.trafficIndex.max);
-    const textureKey = `traffic-${index}`;
+    const textureKey = ASSET_KEYS.texture.traffic(index);
     const { width, height } = getTextureSize(this.scene, textureKey);
     const bounds = this._calculateBounds(height);
     const startY = Phaser.Math.Between(bounds.minY, bounds.maxY);

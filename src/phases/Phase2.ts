@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import type { ChunkDefinition } from '../chunks/types';
-import { PHASE1_PIPE_40_WITH_GAP_5_CHUNK } from '../chunks/phase1PipeChunks';
+import type { ChunkDefinition } from '../chunks/types.ts';
+import { PHASE1_PIPE_40_WITH_GAP_5_CHUNK } from '../chunks/phase1PipeChunks.ts';
 import {
   createPhase2FinalPipeChunk,
   createPhase2Pipe20Chunk,
@@ -11,8 +11,8 @@ import {
   createPhase2Tile12Chunk,
   createPhase2Tile14FanMiddleChunk,
   createPhase2Tile5Chunk,
-} from '../chunks/phase2Chunks';
-import { Phase, PhaseOptions } from './Phase';
+} from '../chunks/phase2Chunks.ts';
+import { Phase, PhaseOptions } from './Phase.ts';
 
 export type Phase2Options = PhaseOptions;
 

@@ -1,10 +1,10 @@
 import Phaser from 'phaser';
-import { ChunkInstance, ChunkTemplate } from '../chunks/ChunkTemplate';
-import type { ChunkDefinition } from '../chunks/types';
-import { FanObject } from '../objects/FanObject';
-import { PipePlatform } from '../objects/platforms/PipePlatform';
-import { PhaseFlow } from './PhaseFlow';
-import type { SpawnTask } from './PhaseFlow';
+import { ChunkInstance, ChunkTemplate } from '../chunks/ChunkTemplate.ts';
+import type { ChunkDefinition } from '../chunks/types.ts';
+import { FanObject } from '../objects/FanObject.ts';
+import { PipePlatform } from '../objects/platforms/PipePlatform.ts';
+import { PhaseFlow } from './PhaseFlow.ts';
+import type { SpawnTask } from './PhaseFlow.ts';
 
 export interface PhaseOptions {
   startX?: number;

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { AppLifecycle } from '../src/systems/AppLifecycle.ts';
 import type { LifecycleScheduler, PausableEngine } from '../src/systems/AppLifecycle.ts';
+import { EVENT_KEYS } from '../src/config/eventKeys.ts';
 
 function createEngine() {
   const calls = { emit: [] as string[], sleep: 0, wake: 0, pauseAll: 0, resumeAll: 0 };
@@ -48,7 +49,7 @@ test('pause emits event immediately and suspends only after the delay', () => {
   const lifecycle = new AppLifecycle(engine, scheduler);
 
   lifecycle.pause('visibility');
-  assert.deepEqual(calls.emit, ['app-paused']);
+  assert.deepEqual(calls.emit, [EVENT_KEYS.appPaused]);
   assert.equal(calls.sleep, 0);
 
   fire();
@@ -96,7 +97,7 @@ test('multiple pause reasons require all of them to resume', () => {
   lifecycle.pause('focus');
   fire();
 
-  assert.deepEqual(calls.emit, ['app-paused']);
+  assert.deepEqual(calls.emit, [EVENT_KEYS.appPaused]);
   assert.equal(calls.sleep, 1);
 
   lifecycle.resume('visibility');
@@ -119,6 +120,6 @@ test('repeated resume and pause after resume are handled', () => {
   lifecycle.pause('focus');
   fire();
 
-  assert.deepEqual(calls.emit, ['app-paused', 'app-paused']);
+  assert.deepEqual(calls.emit, [EVENT_KEYS.appPaused, EVENT_KEYS.appPaused]);
   assert.equal(calls.sleep, 1);
 });

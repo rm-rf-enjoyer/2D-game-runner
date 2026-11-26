@@ -1,6 +1,7 @@
-import { PLATFORM_TILE_SIZE, PlatformConfig } from './types';
+import { ASSET_KEYS } from '../assetKeys.ts';
+import { PLATFORM_TILE_SIZE, PlatformConfig } from './types.ts';
 
-export const PIPE_TILES_KEY = 'pipe-tiles';
+export const PIPE_TILES_KEY = ASSET_KEYS.texture.pipeTiles;
 
 export const PIPE_FRAMES = {
   platformLeft: 0,

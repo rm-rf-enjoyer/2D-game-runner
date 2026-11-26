@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { SCENE_KEYS } from '../config/sceneKeys.ts';
 import menuMusic from '../assets/audio/menu.mp3';
 import menuGame from '../assets/audio/game_theme2.mp3';
 import uiSound from '../assets/audio/ui.mp3';
@@ -16,15 +17,8 @@ import bg5 from '../assets/bg/city5.png';
 import pipeTilesPng from '../assets/tiles/pipeTileset.png';
 import tilePng from '../assets/tiles/tile.png';
 import fanSpinPng from '../assets/objects/fanSpin.png';
-import { PLATFORM_CONFIGS, PLATFORM_TILE_SIZE } from '../config/platforms';
-import {
-  FAN_ANIM_KEY,
-  FAN_FOG_TEXTURE_KEY,
-  FAN_FRAME_COUNT,
-  FAN_FRAME_RATE,
-  FAN_FRAME_SIZE,
-  FAN_TEXTURE_KEY,
-} from '../config/objectsConfig';
+import { PLATFORM_CONFIGS, PLATFORM_TILE_SIZE } from '../config/platforms/index.ts';
+import { FAN_FRAME_COUNT, FAN_FRAME_RATE, FAN_FRAME_SIZE } from '../config/objectsConfig.ts';
 import bg6a from '../assets/bg/city6a.png';
 import bg6b from '../assets/bg/city6b.png';
 import foregroundPng from '../assets/bg/Foreground.png';
@@ -53,8 +47,8 @@ import btnPressedLeft from '../assets/ui/buttons/4.png';
 import btnPressedCenter from '../assets/ui/buttons/5.png';
 import btnPressedRight from '../assets/ui/buttons/6.png';
 
-import { DASH_TEXTURE_KEY, DASH_ANIM_KEY } from '../config/playerConfig';
-import { getPaletteColor } from '../config/palette';
+import { getPaletteColor } from '../config/palette.ts';
+import { ASSET_KEYS } from '../config/assetKeys.ts';
 
 import runPng from '../assets/player/player.png';
 import jumpPng from '../assets/player/hero-jump.png';
@@ -70,7 +64,7 @@ const PRELOAD_CONFIG = {
     dash: { firstFrame: 0, lastFrame: 0, frameRate: 10 },
   },
   font: {
-    image: 'pixel-font',
+    image: ASSET_KEYS.texture.font,
     chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:,+-=;'#|\\/()[]{}!<>?÷%×− ",
     width: 14,
     height: 14,
@@ -81,10 +75,10 @@ const PRELOAD_CONFIG = {
   particles: {
     color: 0xffffff,
     alpha: 1,
-    pixel: { key: 'pixel-particle', width: 2, height: 2 },
-    speedLine: { key: 'speed-line', width: 16, height: 2 },
+    pixel: { key: ASSET_KEYS.texture.pixel, width: 2, height: 2 },
+    speedLine: { key: ASSET_KEYS.texture.speedLine, width: 16, height: 2 },
     fog: {
-      key: FAN_FOG_TEXTURE_KEY,
+      key: ASSET_KEYS.texture.fanFog,
       size: 8,
       colors: [getPaletteColor(8), getPaletteColor(9)],
     },
@@ -93,7 +87,7 @@ const PRELOAD_CONFIG = {
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
-    super('PreloadScene');
+    super(SCENE_KEYS.PRELOAD);
   }
 
   public preload(): void {
@@ -108,47 +102,49 @@ export class PreloadScene extends Phaser.Scene {
     this._createAnimations();
     this._createFont();
     this._createParticles();
-    this.scene.start('MenuScene');
+    this.scene.start(SCENE_KEYS.MENU);
   }
 
   private _loadBackgrounds(): void {
+    const textures = ASSET_KEYS.texture;
     const bgs = {
-      bg1,
-      bg2,
-      bg3,
-      bg4,
-      bg5,
-      bg6a,
-      bg6b,
-      foreground: foregroundPng,
-      'traffic-1': traffic1Png,
-      'traffic-2': traffic2Png,
-      'traffic-3': traffic3Png,
-      'traffic-4': traffic4Png,
-      'traffic-5': traffic5Png,
+      [textures.background1]: bg1,
+      [textures.background2]: bg2,
+      [textures.background3]: bg3,
+      [textures.background4]: bg4,
+      [textures.background5]: bg5,
+      [textures.background6a]: bg6a,
+      [textures.background6b]: bg6b,
+      [textures.foreground]: foregroundPng,
+      [textures.traffic(1)]: traffic1Png,
+      [textures.traffic(2)]: traffic2Png,
+      [textures.traffic(3)]: traffic3Png,
+      [textures.traffic(4)]: traffic4Png,
+      [textures.traffic(5)]: traffic5Png,
     };
     this._loadImages(bgs);
   }
 
   private _loadUI(): void {
+    const textures = ASSET_KEYS.texture;
     const ui = {
-      'menu-1': menu1,
-      'menu-2': menu2,
-      'menu-3': menu3,
-      'menu-4': menu4,
-      'menu-5': menu5,
-      'menu-6': menu6,
-      'menu-7': menu7,
-      'menu-8': menu8,
-      'menu-9': menu9,
-      'btn-pause': pausePng,
-      'pixel-font': fontPng,
-      'btn-normal-left': btnNormalLeft,
-      'btn-normal-center': btnNormalCenter,
-      'btn-normal-right': btnNormalRight,
-      'btn-pressed-left': btnPressedLeft,
-      'btn-pressed-center': btnPressedCenter,
-      'btn-pressed-right': btnPressedRight,
+      [textures.menu(1)]: menu1,
+      [textures.menu(2)]: menu2,
+      [textures.menu(3)]: menu3,
+      [textures.menu(4)]: menu4,
+      [textures.menu(5)]: menu5,
+      [textures.menu(6)]: menu6,
+      [textures.menu(7)]: menu7,
+      [textures.menu(8)]: menu8,
+      [textures.menu(9)]: menu9,
+      [textures.pauseButton]: pausePng,
+      [textures.font]: fontPng,
+      [textures.button('normal', 'left')]: btnNormalLeft,
+      [textures.button('normal', 'center')]: btnNormalCenter,
+      [textures.button('normal', 'right')]: btnNormalRight,
+      [textures.button('pressed', 'left')]: btnPressedLeft,
+      [textures.button('pressed', 'center')]: btnPressedCenter,
+      [textures.button('pressed', 'right')]: btnPressedRight,
     };
     this._loadImages(ui);
   }
@@ -159,7 +155,7 @@ export class PreloadScene extends Phaser.Scene {
       frameHeight: PLATFORM_TILE_SIZE,
     });
     this.load.image(PLATFORM_CONFIGS.tile.textureKey, tilePng);
-    this.load.spritesheet(FAN_TEXTURE_KEY, fanSpinPng, {
+    this.load.spritesheet(ASSET_KEYS.texture.fan, fanSpinPng, {
       frameWidth: FAN_FRAME_SIZE,
       frameHeight: FAN_FRAME_SIZE,
     });
@@ -167,10 +163,11 @@ export class PreloadScene extends Phaser.Scene {
 
   private _loadPlayer(): void {
     const frameSize = PRELOAD_CONFIG.player.frameSize;
-    this.load.image('player', runPng);
-    this._loadSpriteSheet('player-jump', jumpPng, frameSize);
-    this._loadSpriteSheet('player-death', playerDeathPng, frameSize);
-    this._loadSpriteSheet(DASH_TEXTURE_KEY, playerDashPng, frameSize);
+    const textures = ASSET_KEYS.texture;
+    this.load.image(textures.player, runPng);
+    this._loadSpriteSheet(textures.playerJump, jumpPng, frameSize);
+    this._loadSpriteSheet(textures.playerDeath, playerDeathPng, frameSize);
+    this._loadSpriteSheet(textures.playerDash, playerDashPng, frameSize);
   }
 
   private _loadSpriteSheet(key: string, path: string, frameSize: number): void {
@@ -181,12 +178,13 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private _loadAudio(): void {
-    this.load.audio('music-menu', menuMusic);
-    this.load.audio('music-game', menuGame);
-    this.load.audio('sfx-ui', uiSound);
-    this.load.audio('sfx-death', deathSound);
-    this.load.audio('sfx-dash', dashSound);
-    this.load.audio('sfx-click', clickSound);
+    const audio = ASSET_KEYS.audio;
+    this.load.audio(audio.menuMusic, menuMusic);
+    this.load.audio(audio.gameMusic, menuGame);
+    this.load.audio(audio.ui, uiSound);
+    this.load.audio(audio.death, deathSound);
+    this.load.audio(audio.dash, dashSound);
+    this.load.audio(audio.click, clickSound);
   }
 
   private _loadImages(imageMap: Record<string, string>): void {
@@ -198,13 +196,15 @@ export class PreloadScene extends Phaser.Scene {
   private _createAnimations(): void {
     const player = PRELOAD_CONFIG.player;
     const { jump, death, dash, repeat } = player;
-    this._createAnimation('jump-anim', 'player-jump', jump, repeat);
-    this._createAnimation('death-anim', 'player-death', death, repeat);
-    this._createAnimation(DASH_ANIM_KEY, DASH_TEXTURE_KEY, dash, repeat);
+    const textures = ASSET_KEYS.texture;
+    const animations = ASSET_KEYS.animation;
+    this._createAnimation(animations.jump, textures.playerJump, jump, repeat);
+    this._createAnimation(animations.death, textures.playerDeath, death, repeat);
+    this._createAnimation(animations.dash, textures.playerDash, dash, repeat);
 
     this.anims.create({
-      key: FAN_ANIM_KEY,
-      frames: this.anims.generateFrameNumbers(FAN_TEXTURE_KEY, {
+      key: animations.fan,
+      frames: this.anims.generateFrameNumbers(textures.fan, {
         start: 0,
         end: FAN_FRAME_COUNT - 1,
       }),
@@ -233,7 +233,7 @@ export class PreloadScene extends Phaser.Scene {
   private _createFont(): void {
     const { font } = PRELOAD_CONFIG;
     this.cache.bitmapFont.add(
-      'pixel-font',
+      ASSET_KEYS.texture.font,
       Phaser.GameObjects.RetroFont.Parse(this, {
         image: font.image,
         width: font.width,

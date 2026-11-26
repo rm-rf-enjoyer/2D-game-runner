@@ -1,12 +1,13 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT } from '../config/gameConfig';
-import { MenuPanel } from '../objects/MenuPanel';
-import { createMenuButtons, MenuButtonConfig } from '../objects/buttonFactory';
-import { toggleSoundMuted } from '../utils/settings';
-import { PauseMenuState } from '../systems/PauseMenuState';
+import { GAME_WIDTH, GAME_HEIGHT } from '../config/gameConfig.ts';
+import { SCENE_KEYS } from '../config/sceneKeys.ts';
+import { ASSET_KEYS } from '../config/assetKeys.ts';
+import { MenuPanel } from '../objects/MenuPanel.ts';
+import { createMenuButtons, MenuButtonConfig } from '../objects/buttonFactory.ts';
+import { toggleSoundMuted } from '../utils/settings.ts';
+import { PauseMenuState } from '../systems/PauseMenuState.ts';
 
-const SCENES = { GAME: 'GameScene', UI: 'UIScene', MENU: 'MenuScene' };
-const SOUNDS = { UI: 'sfx-ui' };
+const SOUNDS = { UI: ASSET_KEYS.audio.ui };
 
 export class UIScene extends Phaser.Scene {
   private pauseBtn!: Phaser.GameObjects.Image;
@@ -21,7 +22,7 @@ export class UIScene extends Phaser.Scene {
   };
 
   constructor() {
-    super(SCENES.UI);
+    super(SCENE_KEYS.UI);
   }
 
   public create(): void {
@@ -29,7 +30,7 @@ export class UIScene extends Phaser.Scene {
     this.pauseContainer = null;
 
     this.pauseBtn = this.add
-      .image(this.UI_CONFIG.pauseBtn.x, this.UI_CONFIG.pauseBtn.y, 'btn-pause')
+      .image(this.UI_CONFIG.pauseBtn.x, this.UI_CONFIG.pauseBtn.y, ASSET_KEYS.texture.pauseButton)
       .setDepth(this.UI_CONFIG.pauseBtn.depth)
       .setInteractive({ useHandCursor: true });
 
@@ -45,7 +46,7 @@ export class UIScene extends Phaser.Scene {
     if (!this.pauseState.tryOpen()) return;
 
     this._playUISound();
-    this.scene.pause(SCENES.GAME);
+    this.scene.pause(SCENE_KEYS.GAME);
     this.pauseBtn.setVisible(false);
 
     this.pauseContainer = this.add.container(0, 0).setDepth(this.UI_CONFIG.pauseMenu.depth);
@@ -78,18 +79,13 @@ export class UIScene extends Phaser.Scene {
     const configs: MenuButtonConfig[] = [
       { text: 'CONTINUE', yOffset: 0, onClick: () => this.closePause() },
       {
-        text: 'RECORDS',
-        yOffset: step,
-        onClick: () => this._onRecords(),
-      },
-      {
         text: 'SOUND',
-        yOffset: step * 2,
+        yOffset: step,
         onClick: () => this._onSound(),
       },
       {
         text: 'MENU',
-        yOffset: step * 3,
+        yOffset: step * 2,
         onClick: () => this.backToMenu(),
       },
     ];
@@ -112,17 +108,13 @@ export class UIScene extends Phaser.Scene {
     this.pauseContainer = null;
 
     this.pauseBtn.setVisible(true);
-    this.scene.resume(SCENES.GAME);
+    this.scene.resume(SCENE_KEYS.GAME);
   }
 
   private backToMenu(): void {
-    this.scene.stop(SCENES.GAME);
-    this.scene.stop(SCENES.UI);
-    this.scene.start(SCENES.MENU);
-  }
-
-  private _onRecords(): void {
-    // В будущем: this.scene.start('RecordsScene');
+    this.scene.stop(SCENE_KEYS.GAME);
+    this.scene.stop(SCENE_KEYS.UI);
+    this.scene.start(SCENE_KEYS.MENU);
   }
 
   private _onSound(): void {

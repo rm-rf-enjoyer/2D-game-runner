@@ -1,5 +1,5 @@
-import { ChunkTemplate } from './ChunkTemplate';
-import type { ChunkDefinition } from './types';
+import { ChunkTemplate } from './ChunkTemplate.ts';
+import type { ChunkDefinition } from './types.ts';
 
 export const PHASE1_TILE_1_WITH_GAP_6_CHUNK: ChunkDefinition = ChunkTemplate.create({
   id: 'phase1-tile-1-gap-6',

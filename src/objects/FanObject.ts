@@ -5,14 +5,14 @@ import {
   FAN_FOG_TEXTURE_KEY,
   FAN_FRAME_SIZE,
   FAN_TEXTURE_KEY,
-} from '../config/objectsConfig';
+} from '../config/objectsConfig.ts';
 import {
   createStaticCollider,
   destroyStaticCollider,
   getStaticColliderBounds,
   StaticCollider,
   syncStaticCollider,
-} from '../utils/staticCollider';
+} from '../utils/staticCollider.ts';
 
 const FOG_CONFIG = {
   depth: FAN_DEPTH - 1,
@@ -31,6 +31,7 @@ export class FanObject {
   private readonly fog: Phaser.GameObjects.Particles.ParticleEmitter;
   private readonly collisionBody: StaticCollider;
   private readonly physicsGroup: Phaser.Physics.Arcade.StaticGroup;
+  private readonly bounds = new Phaser.Geom.Rectangle();
 
   constructor(
     scene: Phaser.Scene,
@@ -73,7 +74,7 @@ export class FanObject {
   }
 
   public getBounds(): Phaser.Geom.Rectangle {
-    return getStaticColliderBounds(this.collisionBody);
+    return getStaticColliderBounds(this.collisionBody, this.bounds);
   }
 
   public update(shift: number): void {

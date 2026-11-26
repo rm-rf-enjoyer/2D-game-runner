@@ -1,4 +1,5 @@
-import { getPaletteColor } from './palette';
+import { ASSET_KEYS } from './assetKeys.ts';
+import { getPaletteColor } from './palette.ts';
 
 export const PLAYER_CONFIG = {
   jumpVelocity: -270,
@@ -20,7 +21,7 @@ export const PLAYER_PALETTE = {
   lightDirt: getPaletteColor(11),
 } as const;
 
-export const DASH_TEXTURE_KEY = 'player-dash';
-export const DASH_ANIM_KEY = 'dash-anim';
+export const DASH_TEXTURE_KEY = ASSET_KEYS.texture.playerDash;
+export const DASH_ANIM_KEY = ASSET_KEYS.animation.dash;
 
 export type DeathCause = 'pit' | 'wall' | 'object';
