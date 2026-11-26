@@ -23,7 +23,7 @@ import {
   FAN_FRAME_COUNT,
   FAN_FRAME_RATE,
   FAN_FRAME_SIZE,
-  FAN_TEXTURE_KEY
+  FAN_TEXTURE_KEY,
 } from '../config/objectsConfig';
 import bg6a from '../assets/bg/city6a.png';
 import bg6b from '../assets/bg/city6b.png';
@@ -71,7 +71,7 @@ const PRELOAD_CONFIG = {
   },
   font: {
     image: 'pixel-font',
-    chars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:,+-=;\'#|\\/()[]{}!<>?÷%×− ',
+    chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:,+-=;'#|\\/()[]{}!<>?÷%×− ",
     width: 14,
     height: 14,
     charsPerRow: 63,
@@ -86,7 +86,7 @@ const PRELOAD_CONFIG = {
     fog: {
       key: FAN_FOG_TEXTURE_KEY,
       size: 8,
-      colors: [getPaletteColor(10), getPaletteColor(11)],
+      colors: [getPaletteColor(8), getPaletteColor(9)],
     },
   },
 };
@@ -113,7 +113,13 @@ export class PreloadScene extends Phaser.Scene {
 
   private _loadBackgrounds(): void {
     const bgs = {
-      bg1, bg2, bg3, bg4, bg5, bg6a, bg6b,
+      bg1,
+      bg2,
+      bg3,
+      bg4,
+      bg5,
+      bg6a,
+      bg6b,
       foreground: foregroundPng,
       'traffic-1': traffic1Png,
       'traffic-2': traffic2Png,
@@ -126,9 +132,15 @@ export class PreloadScene extends Phaser.Scene {
 
   private _loadUI(): void {
     const ui = {
-      'menu-1': menu1, 'menu-2': menu2, 'menu-3': menu3,
-      'menu-4': menu4, 'menu-5': menu5, 'menu-6': menu6,
-      'menu-7': menu7, 'menu-8': menu8, 'menu-9': menu9,
+      'menu-1': menu1,
+      'menu-2': menu2,
+      'menu-3': menu3,
+      'menu-4': menu4,
+      'menu-5': menu5,
+      'menu-6': menu6,
+      'menu-7': menu7,
+      'menu-8': menu8,
+      'menu-9': menu9,
       'btn-pause': pausePng,
       'pixel-font': fontPng,
       'btn-normal-left': btnNormalLeft,
@@ -161,11 +173,7 @@ export class PreloadScene extends Phaser.Scene {
     this._loadSpriteSheet(DASH_TEXTURE_KEY, playerDashPng, frameSize);
   }
 
-  private _loadSpriteSheet(
-    key: string,
-    path: string,
-    frameSize: number
-  ): void {
+  private _loadSpriteSheet(key: string, path: string, frameSize: number): void {
     this.load.spritesheet(key, path, {
       frameWidth: frameSize,
       frameHeight: frameSize,
@@ -223,9 +231,21 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private _createFont(): void {
+    const { font } = PRELOAD_CONFIG;
     this.cache.bitmapFont.add(
       'pixel-font',
-      Phaser.GameObjects.RetroFont.Parse(this, PRELOAD_CONFIG.font)
+      Phaser.GameObjects.RetroFont.Parse(this, {
+        image: font.image,
+        width: font.width,
+        height: font.height,
+        chars: font.chars,
+        charsPerRow: font.charsPerRow,
+        'offset.x': 0,
+        'offset.y': 0,
+        'spacing.x': font.spacing.x,
+        'spacing.y': font.spacing.y,
+        lineSpacing: font.lineSpacing,
+      })
     );
   }
 
@@ -236,11 +256,7 @@ export class PreloadScene extends Phaser.Scene {
     this._generateFogTexture(particles.fog);
   }
 
-  private _generateTexture(config: {
-    key: string;
-    width: number;
-    height: number;
-  }): void {
+  private _generateTexture(config: { key: string; width: number; height: number }): void {
     const particles = PRELOAD_CONFIG.particles;
     const g = this.add.graphics();
     g.fillStyle(particles.color, particles.alpha);
@@ -249,11 +265,7 @@ export class PreloadScene extends Phaser.Scene {
     g.destroy();
   }
 
-  private _generateFogTexture(config: {
-    key: string;
-    size: number;
-    colors: number[];
-  }): void {
+  private _generateFogTexture(config: { key: string; size: number; colors: number[] }): void {
     const pattern = [
       '   x    ',
       '  xxxx  ',
@@ -270,7 +282,7 @@ export class PreloadScene extends Phaser.Scene {
       [...row].forEach((cell, x) => {
         if (cell === ' ') return;
         const step = (x + y) % 2;
-        g.fillStyle(config.colors[step], step === 0 ? 0.4 : 0.18);
+        g.fillStyle(config.colors[step], 1);
         g.fillRect(x, y, 1, 1);
       });
     });

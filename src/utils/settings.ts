@@ -22,6 +22,7 @@ export function setSoundMuted(muted: boolean): void {
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({ muted }));
   } catch {
+    return;
   }
 }
 

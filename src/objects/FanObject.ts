@@ -4,14 +4,14 @@ import {
   FAN_DEPTH,
   FAN_FOG_TEXTURE_KEY,
   FAN_FRAME_SIZE,
-  FAN_TEXTURE_KEY
+  FAN_TEXTURE_KEY,
 } from '../config/objectsConfig';
 import {
   createStaticCollider,
   destroyStaticCollider,
   getStaticColliderBounds,
   StaticCollider,
-  syncStaticCollider
+  syncStaticCollider,
 } from '../utils/staticCollider';
 
 const FOG_CONFIG = {
@@ -21,7 +21,7 @@ const FOG_CONFIG = {
   speed: { min: 6, max: 18 },
   angle: { min: 205, max: 335 },
   scale: { min: 2, max: 3, int: true },
-  alpha: { start: 0.35, end: 0 },
+  alpha: { start: 1, end: 1 },
   offset: Math.floor(FAN_FRAME_SIZE / 6),
 };
 
@@ -41,21 +41,22 @@ export class FanObject {
     this.x = x;
     this.physicsGroup = physicsGroup;
 
-    this.sprite = scene.add.sprite(x, y, FAN_TEXTURE_KEY, 0)
-      .setDepth(FAN_DEPTH);
+    this.sprite = scene.add.sprite(x, y, FAN_TEXTURE_KEY, 0).setDepth(FAN_DEPTH);
     this.sprite.play(FAN_ANIM_KEY);
 
-    this.fog = scene.add.particles(x, y, FAN_FOG_TEXTURE_KEY, {
-      x: { min: -FOG_CONFIG.offset, max: FOG_CONFIG.offset, int: true },
-      y: { min: -FOG_CONFIG.offset, max: FOG_CONFIG.offset, int: true },
-      speed: FOG_CONFIG.speed,
-      angle: FOG_CONFIG.angle,
-      lifespan: FOG_CONFIG.lifespan,
-      scale: FOG_CONFIG.scale,
-      alpha: FOG_CONFIG.alpha,
-      frequency: FOG_CONFIG.frequency,
-      quantity: 1,
-    }).setDepth(FOG_CONFIG.depth);
+    this.fog = scene.add
+      .particles(x, y, FAN_FOG_TEXTURE_KEY, {
+        x: { min: -FOG_CONFIG.offset, max: FOG_CONFIG.offset, int: true },
+        y: { min: -FOG_CONFIG.offset, max: FOG_CONFIG.offset, int: true },
+        speed: FOG_CONFIG.speed,
+        angle: FOG_CONFIG.angle,
+        lifespan: FOG_CONFIG.lifespan,
+        scale: FOG_CONFIG.scale,
+        alpha: FOG_CONFIG.alpha,
+        frequency: FOG_CONFIG.frequency,
+        quantity: 1,
+      })
+      .setDepth(FOG_CONFIG.depth);
 
     this.collisionBody = createStaticCollider(
       scene,

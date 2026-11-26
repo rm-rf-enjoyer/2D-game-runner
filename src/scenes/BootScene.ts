@@ -2,8 +2,8 @@ import Phaser from 'phaser';
 import { getSoundMuted } from '../utils/settings';
 
 export class BootScene extends Phaser.Scene {
-  constructor() { 
-    super('BootScene'); 
+  constructor() {
+    super('BootScene');
   }
 
   public create(): void {

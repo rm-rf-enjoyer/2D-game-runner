@@ -1,6 +1,6 @@
 {
   "appId": "com.example.app",
-  "appName": "Runner",
+  "appName": "Wavepunk Runner",
   "webDir": "dist",
   "android": {
     "adjustMarginsForEdgeToEdge": "disable"
@@ -10,7 +10,7 @@
       "launchAutoHide": true,
       "launchShowDuration": 0,
       "launchFadeOutDuration": 200,
-      "backgroundColor": "#000000"
+      "backgroundColor": "#0A081C"
     },
     "SystemBars": {
       "hidden": true,

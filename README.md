@@ -1,1 +1,1 @@
-# 2D-game-runner
+# Wavepunk Runner

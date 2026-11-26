@@ -53,12 +53,7 @@ export class MenuPanel {
     this.root.destroy();
   }
 
-  private _getTileKey(
-    row: number,
-    col: number,
-    maxRows: number,
-    maxCols: number
-  ): string {
+  private _getTileKey(row: number, col: number, maxRows: number, maxCols: number): string {
     const rowType = getEdgeType(row, maxRows - 1);
     const colType = getEdgeType(col, maxCols - 1);
     const index = rowType * 3 + colType + 1;

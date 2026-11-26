@@ -1,11 +1,7 @@
 import Phaser from 'phaser';
 import { GAMEPLAY_CONFIG } from '../config/gameConfig';
-import {
-  PLAYER_CONFIG,
-  DeathCause,
-  DASH_TEXTURE_KEY,
-  DASH_ANIM_KEY
-} from '../config/playerConfig';
+import { PLAYER_CONFIG, DeathCause, DASH_TEXTURE_KEY, DASH_ANIM_KEY } from '../config/playerConfig';
+import { WORLD_INITIAL_SPEED } from '../config/worldConfig';
 import { PlayerEffects } from './player/PlayerEffects';
 import { PlayerHover } from './player/PlayerHover';
 import { PlayerTrail } from './player/PlayerTrail';
@@ -24,8 +20,8 @@ export class Player {
   public isDead: boolean = false;
 
   private readonly scene: Phaser.Scene;
+  private readonly body: Phaser.Physics.Arcade.Body;
   private readonly baseX: number;
-  private readonly baseY: number;
 
   private isJumping: boolean = false;
   private justJumped: boolean = false;
@@ -41,15 +37,16 @@ export class Player {
   constructor(options: PlayerOptions) {
     this.scene = options.scene;
     this.baseX = options.x;
-    this.baseY = options.y;
-    this.getWorldSpeed = options.getWorldSpeed
-      ?? (() => GAMEPLAY_CONFIG.worldSpeed);
+    this.getWorldSpeed = options.getWorldSpeed ?? (() => WORLD_INITIAL_SPEED);
 
-    this.sprite = this.scene.physics.add.sprite(
-      options.x,
-      options.y,
-      'player'
-    );
+    this.sprite = this.scene.physics.add.sprite(options.x, options.y, 'player');
+
+    const body = this.sprite.body;
+    if (!(body instanceof Phaser.Physics.Arcade.Body)) {
+      throw new Error('Player sprite must have a dynamic Arcade Physics body');
+    }
+    this.body = body;
+
     this.setupPhysics();
 
     const scene = options.scene;
@@ -57,6 +54,7 @@ export class Player {
     this.hover = new PlayerHover(
       scene,
       this.sprite,
+      this.body,
       () => !this.isJumping && !this.isDashing && !this.isDead
     );
     this.trail = new PlayerTrail(scene, this.sprite);
@@ -122,7 +120,7 @@ export class Player {
     this.hover.stop();
     this.effects.stopExhaust();
     this.sprite.setVelocity(0, 0);
-    this.sprite.body.enable = false;
+    this.body.enable = false;
 
     this.trail.clear();
     this.sprite.play('death-anim');
@@ -153,17 +151,13 @@ export class Player {
     this.sprite.setGravityY(PLAYER_CONFIG.gravityY);
 
     const { width, height } = PLAYER_CONFIG.bodySize;
-    this.sprite.body.setSize(width, height);
+    this.body.setSize(width, height);
     this._resetBodyOffset();
-    this.sprite.setMaxVelocity(
-      PLAYER_CONFIG.maxVelocityX,
-      PLAYER_CONFIG.maxVelocityY
-    );
+    this.sprite.setMaxVelocity(PLAYER_CONFIG.maxVelocityX, PLAYER_CONFIG.maxVelocityY);
   }
 
   private isOnGround(): boolean {
-    const body = this.sprite.body as Phaser.Physics.Arcade.Body;
-    return body.blocked.down || body.touching.down;
+    return this.body.blocked.down || this.body.touching.down;
   }
 
   private resetHoverAndPosition(): void {
@@ -175,7 +169,7 @@ export class Player {
 
   private _resetBodyOffset(): void {
     const { x, y } = PLAYER_CONFIG.bodyOffset;
-    this.sprite.body.setOffset(x, y);
+    this.body.setOffset(x, y);
   }
 
   private endDash(): void {
@@ -196,7 +190,7 @@ export class Player {
       targets: this.sprite,
       y: this.sprite.y + PLAYER_CONFIG.deathTween.yDistance,
       duration: PLAYER_CONFIG.deathTween.duration,
-      ease: 'Linear'
+      ease: 'Linear',
     });
   }
 }

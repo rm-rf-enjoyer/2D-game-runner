@@ -55,7 +55,7 @@ const RAIN_CONFIG = {
       driftFactor: 0.85,
       driftJitter: 55,
       alpha: 1,
-      colors: [getPaletteColor(2), getPaletteColor(10)],
+      colors: [getPaletteColor(2), getPaletteColor(8)],
     },
     {
       count: 15,
@@ -65,11 +65,7 @@ const RAIN_CONFIG = {
       driftFactor: 1.35,
       driftJitter: 95,
       alpha: 1,
-      colors: [
-        getPaletteColor(6),
-        getPaletteColor(10),
-        getPaletteColor(11),
-      ],
+      colors: [getPaletteColor(3), getPaletteColor(8), getPaletteColor(9)],
     },
     {
       count: 4,
@@ -79,11 +75,7 @@ const RAIN_CONFIG = {
       driftFactor: 1.85,
       driftJitter: 130,
       alpha: 1,
-      colors: [
-        getPaletteColor(9),
-        getPaletteColor(11),
-        getPaletteColor(12),
-      ],
+      colors: [getPaletteColor(8), getPaletteColor(11), getPaletteColor(15)],
     },
   ] as RainLayerConfig[],
 };
@@ -97,13 +89,8 @@ const SPLASH_CONFIG = {
   speedX: { min: -50, max: 50 },
   speedY: { min: -220, max: -50 },
   gravityY: 650,
-  alpha: 0.6,
-  colors: [
-    getPaletteColor(2),
-    getPaletteColor(6),
-    getPaletteColor(10),
-    getPaletteColor(11),
-  ],
+  alpha: 1,
+  colors: [getPaletteColor(2), getPaletteColor(8), getPaletteColor(9), getPaletteColor(11)],
 };
 
 const PRESET_DEPTHS: Record<RainPreset, readonly number[]> = {
@@ -122,44 +109,36 @@ export class Rain {
   constructor(scene: Phaser.Scene, preset: RainPreset = 'game') {
     const depths = PRESET_DEPTHS[preset];
     this.layers = RAIN_CONFIG.layers;
-    this.graphics = this.layers.map((_, index) =>
-      scene.add.graphics().setDepth(depths[index])
+    this.graphics = this.layers.map((_, index) => scene.add.graphics().setDepth(depths[index]));
+    this.splashGraphics = scene.add.graphics().setDepth(depths[depths.length - 1] + 1);
+    this.drops = this.layers.map((layer) =>
+      Array.from({ length: layer.count }, () => this._createDrop(layer, true, 0))
     );
-    this.splashGraphics = scene.add.graphics()
-      .setDepth(depths[depths.length - 1] + 1);
-    this.drops = this.layers.map(layer =>
-      Array.from({ length: layer.count }, () =>
-        this._createDrop(layer, true, 0)
-      )
-    );
-    this.splashes = Array.from({ length: SPLASH_CONFIG.poolSize }, () =>
-      this._createSplash()
-    );
+    this.splashes = Array.from({ length: SPLASH_CONFIG.poolSize }, () => this._createSplash());
   }
 
-  public update(
-    delta: number,
-    baseSpeed: number,
-    isDashActive: boolean = false
-  ): void {
+  public update(delta: number, baseSpeed: number, isDashActive: boolean = false): void {
     const seconds = delta / GAMEPLAY_CONFIG.msPerSecond;
-    const speedMultiplier = isDashActive
-      ? RAIN_CONFIG.dashSpeedMultiplier
-      : 1;
+    const speedMultiplier = isDashActive ? RAIN_CONFIG.dashSpeedMultiplier : 1;
 
     this.layers.forEach((layer, index) => {
       const drops = this.drops[index];
 
       drops.forEach((drop, dropIndex) => {
         const wasAboveBottom = drop.y < GAME_HEIGHT;
-        drop.velocityX = (baseSpeed * layer.driftFactor
-          * (0.85 + 0.3 * drop.sizeRatio) + drop.drift) * speedMultiplier;
+        drop.velocityX =
+          (baseSpeed * layer.driftFactor * (0.85 + 0.3 * drop.sizeRatio) + drop.drift) *
+          speedMultiplier;
         drop.x -= drop.velocityX * seconds;
         drop.y += drop.fallSpeed * seconds;
 
-        if (wasAboveBottom && drop.y >= GAME_HEIGHT
-          && drop.x >= 0 && drop.x <= GAME_WIDTH
-          && Phaser.Math.RND.frac() < SPLASH_CONFIG.spawnChance) {
+        if (
+          wasAboveBottom &&
+          drop.y >= GAME_HEIGHT &&
+          drop.x >= 0 &&
+          drop.x <= GAME_WIDTH &&
+          Phaser.Math.RND.frac() < SPLASH_CONFIG.spawnChance
+        ) {
           this._spawnSplash(drop.x, baseSpeed * speedMultiplier);
           if (Phaser.Math.RND.frac() < SPLASH_CONFIG.extraChance) {
             this._spawnSplash(drop.x, baseSpeed * speedMultiplier);
@@ -167,11 +146,7 @@ export class Rain {
         }
 
         if (this._isOffscreen(drop)) {
-          drops[dropIndex] = this._createDrop(
-            layer,
-            false,
-            baseSpeed * speedMultiplier
-          );
+          drops[dropIndex] = this._createDrop(layer, false, baseSpeed * speedMultiplier);
         }
       });
 
@@ -191,7 +166,7 @@ export class Rain {
       life: 0,
       lifespan: 1,
       width: 1,
-      color: 0xffffff,
+      color: getPaletteColor(2),
     };
   }
 
@@ -200,18 +175,11 @@ export class Rain {
     this.splashCursor = (this.splashCursor + 1) % this.splashes.length;
     splash.x = x;
     splash.y = GAME_HEIGHT - Phaser.Math.Between(1, 3);
-    splash.velocityX = Phaser.Math.FloatBetween(
-      SPLASH_CONFIG.speedX.min,
-      SPLASH_CONFIG.speedX.max
-    ) + baseSpeed * 0.15;
-    splash.velocityY = Phaser.Math.FloatBetween(
-      SPLASH_CONFIG.speedY.min,
-      SPLASH_CONFIG.speedY.max
-    );
-    splash.lifespan = Phaser.Math.Between(
-      SPLASH_CONFIG.lifespan.min,
-      SPLASH_CONFIG.lifespan.max
-    );
+    splash.velocityX =
+      Phaser.Math.FloatBetween(SPLASH_CONFIG.speedX.min, SPLASH_CONFIG.speedX.max) +
+      baseSpeed * 0.15;
+    splash.velocityY = Phaser.Math.FloatBetween(SPLASH_CONFIG.speedY.min, SPLASH_CONFIG.speedY.max);
+    splash.lifespan = Phaser.Math.Between(SPLASH_CONFIG.lifespan.min, SPLASH_CONFIG.lifespan.max);
     splash.life = splash.lifespan;
     splash.width = Phaser.Math.Between(1, 2);
     splash.color = Phaser.Math.RND.pick(SPLASH_CONFIG.colors);
@@ -221,7 +189,7 @@ export class Rain {
     const seconds = delta / GAMEPLAY_CONFIG.msPerSecond;
     const bandTop = GAME_HEIGHT - SPLASH_CONFIG.bandHeight;
 
-    this.splashes.forEach(splash => {
+    this.splashes.forEach((splash) => {
       if (splash.life <= 0) return;
 
       splash.life -= delta;
@@ -229,8 +197,13 @@ export class Rain {
       splash.y += splash.velocityY * seconds;
       splash.velocityY += SPLASH_CONFIG.gravityY * seconds;
 
-      if (splash.life <= 0 || splash.y < bandTop || splash.y > GAME_HEIGHT
-        || splash.x < 0 || splash.x > GAME_WIDTH) {
+      if (
+        splash.life <= 0 ||
+        splash.y < bandTop ||
+        splash.y > GAME_HEIGHT ||
+        splash.x < 0 ||
+        splash.x > GAME_WIDTH
+      ) {
         splash.life = 0;
       }
     });
@@ -240,47 +213,27 @@ export class Rain {
     const graphics = this.splashGraphics;
     graphics.clear();
 
-    this.splashes.forEach(splash => {
+    this.splashes.forEach((splash) => {
       if (splash.life <= 0) return;
-      graphics.fillStyle(
-        splash.color,
-        SPLASH_CONFIG.alpha * (splash.life / splash.lifespan)
-      );
-      graphics.fillRect(
-        Math.round(splash.x),
-        Math.round(splash.y),
-        splash.width,
-        1
-      );
+      graphics.fillStyle(splash.color, SPLASH_CONFIG.alpha);
+      graphics.fillRect(Math.round(splash.x), Math.round(splash.y), splash.width, 1);
     });
   }
 
-  private _createDrop(
-    layer: RainLayerConfig,
-    initial: boolean,
-    baseSpeed: number
-  ): RainDrop {
+  private _createDrop(layer: RainLayerConfig, initial: boolean, baseSpeed: number): RainDrop {
     const margin = RAIN_CONFIG.margin;
     const windPadding = baseSpeed * layer.driftFactor * 0.4;
     const length = Phaser.Math.Between(layer.length.min, layer.length.max);
-    const sizeRatio = (length - layer.length.min)
-      / (layer.length.max - layer.length.min);
+    const sizeRatio = (length - layer.length.min) / (layer.length.max - layer.length.min);
     return {
       x: initial
         ? Phaser.Math.Between(-margin, GAME_WIDTH + margin)
-        : Phaser.Math.Between(
-          0,
-          GAME_WIDTH + RAIN_CONFIG.respawnPadding + windPadding
-        ),
+        : Phaser.Math.Between(0, GAME_WIDTH + RAIN_CONFIG.respawnPadding + windPadding),
       y: initial
         ? Phaser.Math.Between(-margin, GAME_HEIGHT)
         : -margin - Phaser.Math.Between(0, RAIN_CONFIG.respawnPadding),
       length,
-      fallSpeed: Phaser.Math.Linear(
-        layer.fallSpeed.min,
-        layer.fallSpeed.max,
-        sizeRatio
-      ),
+      fallSpeed: Phaser.Math.Linear(layer.fallSpeed.min, layer.fallSpeed.max, sizeRatio),
       sizeRatio,
       drift: layer.driftJitter * sizeRatio,
       velocityX: 0,
@@ -289,8 +242,9 @@ export class Rain {
   }
 
   private _isOffscreen(drop: RainDrop): boolean {
-    return drop.y > GAME_HEIGHT + RAIN_CONFIG.margin
-      || drop.x < -RAIN_CONFIG.margin - drop.length * 4;
+    return (
+      drop.y > GAME_HEIGHT + RAIN_CONFIG.margin || drop.x < -RAIN_CONFIG.margin - drop.length * 4
+    );
   }
 
   private _render(index: number): void {
@@ -299,10 +253,10 @@ export class Rain {
     const graphics = this.graphics[index];
     graphics.clear();
 
-    layer.colors.forEach(color => {
+    layer.colors.forEach((color) => {
       graphics.lineStyle(layer.thickness, color, layer.alpha);
       graphics.beginPath();
-      drops.forEach(drop => {
+      drops.forEach((drop) => {
         if (drop.color !== color) return;
         const slant = (drop.velocityX / drop.fallSpeed) * drop.length;
         graphics.moveTo(drop.x + slant, drop.y - drop.length);

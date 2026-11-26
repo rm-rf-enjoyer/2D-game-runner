@@ -6,7 +6,7 @@ import {
   destroyStaticCollider,
   getStaticColliderBounds,
   StaticCollider,
-  syncStaticCollider
+  syncStaticCollider,
 } from '../../utils/staticCollider';
 
 export interface PipePlatformOptions {
@@ -19,12 +19,7 @@ export class PipePlatform extends PipeSegment {
   private readonly collisionBody: StaticCollider;
   private readonly physicsGroup: Phaser.Physics.Arcade.StaticGroup;
 
-  constructor(
-    scene: Phaser.Scene,
-    x: number,
-    y: number,
-    options: PipePlatformOptions
-  ) {
+  constructor(scene: Phaser.Scene, x: number, y: number, options: PipePlatformOptions) {
     const config = PLATFORM_CONFIGS[options.platformType ?? 'pipe'];
 
     super(scene, x, y, {

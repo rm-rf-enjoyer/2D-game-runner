@@ -4,54 +4,37 @@ import { App } from '@capacitor/app';
 import { StatusBar } from '@capacitor/status-bar';
 import { ScrollbarHider } from 'capacitor-scrollbar-hider';
 
-import { gameConfig } from './config/gameConfig';
+import { createGameConfig } from './config/gameConfig';
 import { BootScene } from './scenes/BootScene';
 import { PreloadScene } from './scenes/PreloadScene';
 import { MenuScene } from './scenes/MenuScene';
 import { GameScene } from './scenes/GameScene';
 import { UIScene } from './scenes/UIScene';
+import { AppLifecycle } from './systems/AppLifecycle';
 
 ScrollbarHider.hideScrollbars();
 
-// Регистрируем сцены здесь, а не в gameConfig
-gameConfig.scene = [BootScene, PreloadScene, MenuScene, GameScene, UIScene];
-
-const game = new Phaser.Game(gameConfig);
+const game = new Phaser.Game(
+  createGameConfig([BootScene, PreloadScene, MenuScene, GameScene, UIScene])
+);
 
 if (Capacitor.isNativePlatform()) {
   StatusBar.hide();
 }
 
-let isEnginePaused = false;
-
-function pauseGameEngine() {
-  if (isEnginePaused) return;
-  isEnginePaused = true;
-  game.events.emit('app-paused');
-  setTimeout(() => {
-    game.loop.sleep();      
-    game.sound.pauseAll();  
-  }, 50); 
-}
-
-function resumeGameEngine() {
-  if (!isEnginePaused) return;
-  isEnginePaused = false;
-  game.loop.wake();       
-  game.sound.resumeAll(); 
-}
+const lifecycle = new AppLifecycle(game);
 
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) pauseGameEngine();
-  else resumeGameEngine();
+  if (document.hidden) lifecycle.pause('visibility');
+  else lifecycle.resume('visibility');
 });
 
-window.addEventListener('blur', pauseGameEngine);
-window.addEventListener('focus', resumeGameEngine);
+window.addEventListener('blur', () => lifecycle.pause('focus'));
+window.addEventListener('focus', () => lifecycle.resume('focus'));
 
 if (Capacitor.isNativePlatform()) {
   App.addListener('appStateChange', ({ isActive }) => {
-    if (!isActive) pauseGameEngine();
-    else resumeGameEngine();
+    if (isActive) lifecycle.resume('native');
+    else lifecycle.pause('native');
   });
 }

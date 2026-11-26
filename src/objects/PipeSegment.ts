@@ -33,13 +33,13 @@ export abstract class PipeSegment {
 
   public update(shift: number): void {
     this.x -= shift;
-    this.tiles.forEach(tile => {
+    this.tiles.forEach((tile) => {
       tile.x -= shift;
     });
   }
 
   public destroy(): void {
-    this.tiles.forEach(tile => tile.destroy());
+    this.tiles.forEach((tile) => tile.destroy());
     this.tiles.length = 0;
   }
 
@@ -47,12 +47,13 @@ export abstract class PipeSegment {
     const tileCount = this.width / PLATFORM_TILE_SIZE;
 
     for (let index = 0; index < tileCount; index++) {
-      const tile = this.scene.add.image(
-        this.x + index * PLATFORM_TILE_SIZE,
-        this.y,
-        this.config.textureKey,
-        this._getFrame(index, tileCount)
-      )
+      const tile = this.scene.add
+        .image(
+          this.x + index * PLATFORM_TILE_SIZE,
+          this.y,
+          this.config.textureKey,
+          this._getFrame(index, tileCount)
+        )
         .setOrigin(0, 0)
         .setDepth(this.config.depth);
 

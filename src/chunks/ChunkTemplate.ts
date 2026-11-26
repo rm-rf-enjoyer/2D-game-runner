@@ -1,29 +1,10 @@
 import Phaser from 'phaser';
-import { PLATFORM_TILE_SIZE, PlatformType } from '../config/platforms';
+import { PLATFORM_TILE_SIZE } from '../config/platforms';
 import { FanObject } from '../objects/FanObject';
 import { PipePlatform } from '../objects/platforms/PipePlatform';
+import type { ChunkDefinition, ChunkObjectDef, ChunkPlatformDef } from './types';
 
-export type ChunkObjectType = 'fan';
-
-export interface ChunkPlatformDef {
-  xTiles: number;
-  yTiles: number;
-  widthTiles: number;
-  platformType?: PlatformType;
-}
-
-export interface ChunkObjectDef {
-  type: ChunkObjectType;
-  xTiles: number;
-  yTiles: number;
-}
-
-export interface ChunkDefinition {
-  id: string;
-  widthTiles: number;
-  platforms: ChunkPlatformDef[];
-  objects: ChunkObjectDef[];
-}
+export type { ChunkDefinition, ChunkObjectDef, ChunkObjectType, ChunkPlatformDef } from './types';
 
 export interface ChunkSpawnContext {
   scene: Phaser.Scene;
@@ -32,39 +13,26 @@ export interface ChunkSpawnContext {
   baseY: number;
 }
 
-interface ChunkEntity {
-  rightEdge: number;
-  update(shift: number): void;
-  destroy(): void;
-}
-
 export interface ChunkInstance {
   platforms: PipePlatform[];
   objects: FanObject[];
   nextX: number;
   update(shift: number): void;
   destroy(): void;
-  isOffscreen(despawnMargin: number): boolean;
 }
 
 export class ChunkTemplate {
   public static create(
-    definition: Omit<ChunkDefinition, 'objects'>
-      & Partial<Pick<ChunkDefinition, 'objects'>>
+    definition: Omit<ChunkDefinition, 'objects'> & Partial<Pick<ChunkDefinition, 'objects'>>
   ): ChunkDefinition {
     return { objects: [], ...definition };
   }
 
-  public static spawn(
-    definition: ChunkDefinition,
-    context: ChunkSpawnContext
-  ): ChunkInstance {
-    const platforms = definition.platforms.map(platformDef =>
+  public static spawn(definition: ChunkDefinition, context: ChunkSpawnContext): ChunkInstance {
+    const platforms = definition.platforms.map((platformDef) =>
       this._spawnPlatform(platformDef, context)
     );
-    const objects = definition.objects.map(objectDef =>
-      this._spawnObject(objectDef, context)
-    );
+    const objects = definition.objects.map((objectDef) => this._spawnObject(objectDef, context));
 
     const nextX = context.startX + definition.widthTiles * PLATFORM_TILE_SIZE;
 
@@ -73,18 +41,14 @@ export class ChunkTemplate {
       objects,
       nextX,
       update(shift: number): void {
-        platforms.forEach(platform => platform.update(shift));
-        objects.forEach(object => object.update(shift));
+        platforms.forEach((platform) => platform.update(shift));
+        objects.forEach((object) => object.update(shift));
       },
       destroy(): void {
-        platforms.forEach(platform => platform.destroy());
-        objects.forEach(object => object.destroy());
+        platforms.forEach((platform) => platform.destroy());
+        objects.forEach((object) => object.destroy());
         platforms.length = 0;
         objects.length = 0;
-      },
-      isOffscreen(despawnMargin: number): boolean {
-        const entities: ChunkEntity[] = [...platforms, ...objects];
-        return entities.every(entity => entity.rightEdge < -despawnMargin);
       },
     };
   }
@@ -103,10 +67,7 @@ export class ChunkTemplate {
     });
   }
 
-  private static _spawnObject(
-    objectDef: ChunkObjectDef,
-    context: ChunkSpawnContext
-  ): FanObject {
+  private static _spawnObject(objectDef: ChunkObjectDef, context: ChunkSpawnContext): FanObject {
     const x = context.startX + objectDef.xTiles * PLATFORM_TILE_SIZE;
     const y = context.baseY - objectDef.yTiles * PLATFORM_TILE_SIZE;
 

@@ -2,16 +2,9 @@ import Phaser from 'phaser';
 import { Scenery, SceneryState } from '../objects/Scenery';
 import { MenuPanel } from '../objects/MenuPanel';
 import { Rain } from '../objects/Rain';
-import {
-  GAME_WIDTH,
-  GAME_HEIGHT,
-  GAMEPLAY_CONFIG,
-  MUSIC_VOLUME
-} from '../config/gameConfig';
-import {
-  createMenuButtons,
-  MenuButtonConfig
-} from '../objects/buttonFactory';
+import { GAME_WIDTH, GAME_HEIGHT, MUSIC_VOLUME } from '../config/gameConfig';
+import { WORLD_INITIAL_SPEED } from '../config/worldConfig';
+import { createMenuButtons, MenuButtonConfig } from '../objects/buttonFactory';
 import { toggleSoundMuted } from '../utils/settings';
 
 const PANEL_TILES = 6;
@@ -37,7 +30,7 @@ export class MenuScene extends Phaser.Scene {
 
   public update(_time: number, delta: number): void {
     this.scenery.update(delta);
-    this.rain.update(delta, GAMEPLAY_CONFIG.worldSpeed);
+    this.rain.update(delta, WORLD_INITIAL_SPEED);
   }
 
   private setupUI(state?: SceneryState): void {
@@ -48,7 +41,7 @@ export class MenuScene extends Phaser.Scene {
       scene: this,
       centerX: GAME_WIDTH / 2,
       centerY: GAME_HEIGHT / 2,
-      widthTiles: PANEL_TILES
+      widthTiles: PANEL_TILES,
     });
     this.panel.setDepth(5);
 
@@ -57,31 +50,34 @@ export class MenuScene extends Phaser.Scene {
       {
         text: 'RECORDS',
         yOffset: BTN_STEP,
-        onClick: () => this.handleRecords()
+        onClick: () => this.handleRecords(),
       },
       {
         text: 'SOUND',
         yOffset: BTN_STEP * 2,
-        onClick: () => this.handleSound()
-      }
+        onClick: () => this.handleSound(),
+      },
     ];
 
-    createMenuButtons({
-      scene: this,
-      centerX: GAME_WIDTH / 2,
-      startY: BTN_START_Y
-    }, configs);
+    createMenuButtons(
+      {
+        scene: this,
+        centerX: GAME_WIDTH / 2,
+        startY: BTN_START_Y,
+      },
+      configs
+    );
   }
 
   private setupMusic(): void {
-    this.sound.getAllPlaying().forEach(sound => sound.stop());
+    this.sound.getAllPlaying().forEach((sound) => sound.stop());
 
     const existingMusic = this.sound.get(MENU_MUSIC_KEY);
 
     if (!existingMusic) {
       this.music = this.sound.add(MENU_MUSIC_KEY, {
         loop: true,
-        volume: MUSIC_VOLUME
+        volume: MUSIC_VOLUME,
       });
     } else {
       this.music = existingMusic;
@@ -104,7 +100,7 @@ export class MenuScene extends Phaser.Scene {
 
   private handlePlay(): void {
     this.scene.start('GameScene', {
-      scenery: this.scenery.getState()
+      scenery: this.scenery.getState(),
     });
   }
 
@@ -115,6 +111,4 @@ export class MenuScene extends Phaser.Scene {
   private handleSound(): void {
     this.sound.mute = toggleSoundMuted(this.sound.mute);
   }
-
-
 }

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { getPaletteColor } from '../../config/palette';
 
 interface TrailPoint {
   x: number;
@@ -6,7 +7,7 @@ interface TrailPoint {
 }
 
 const TRAIL_CONFIG = {
-  color: 0x4FE8F4,
+  color: getPaletteColor(12),
   depth: 7,
   minPoints: 2,
   minThickness: 1,
@@ -37,7 +38,7 @@ export class PlayerTrail {
     this.timer = this.scene.time.addEvent({
       delay: TRAIL_CONFIG.delay,
       loop: true,
-      callback: () => this._spawnPoint()
+      callback: () => this._spawnPoint(),
     });
   }
 
@@ -67,7 +68,7 @@ export class PlayerTrail {
     const { x: offsetX, y: offsetY } = TRAIL_CONFIG.motorOffset;
     this.points.unshift({
       x: this.sprite.x + offsetX,
-      y: this.sprite.y + offsetY
+      y: this.sprite.y + offsetY,
     });
     if (this.points.length > TRAIL_CONFIG.maxPoints) {
       this.points.pop();
@@ -86,11 +87,7 @@ export class PlayerTrail {
         TRAIL_CONFIG.baseThickness * (1 - i / this.points.length)
       );
 
-      this.graphics.lineStyle(
-        thickness,
-        TRAIL_CONFIG.color,
-        TRAIL_CONFIG.alpha
-      );
+      this.graphics.lineStyle(thickness, TRAIL_CONFIG.color, TRAIL_CONFIG.alpha);
       this.graphics.beginPath();
       this.graphics.moveTo(p1.x, p1.y);
       this.graphics.lineTo(p2.x, p2.y);

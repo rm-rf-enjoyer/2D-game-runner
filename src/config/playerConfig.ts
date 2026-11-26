@@ -1,3 +1,5 @@
+import { getPaletteColor } from './palette';
+
 export const PLAYER_CONFIG = {
   jumpVelocity: -270,
   gravityY: -75,
@@ -11,14 +13,14 @@ export const PLAYER_CONFIG = {
 };
 
 export const PLAYER_PALETTE = {
-  darkDirt: 0x202333,
-  dirt: 0x392D42,
-  midDirt: 0x4B6479,
-  dust: 0x67778D,
-  lightDirt: 0xB4938B,
+  darkDirt: getPaletteColor(1),
+  dirt: getPaletteColor(4),
+  midDirt: getPaletteColor(8),
+  dust: getPaletteColor(9),
+  lightDirt: getPaletteColor(11),
 } as const;
 
 export const DASH_TEXTURE_KEY = 'player-dash';
 export const DASH_ANIM_KEY = 'dash-anim';
 
-export type DeathCause = 'pit' | 'wall' | 'ground' | 'obstacle' | 'object';
+export type DeathCause = 'pit' | 'wall' | 'object';

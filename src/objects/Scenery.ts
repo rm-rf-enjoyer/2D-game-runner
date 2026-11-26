@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
 import { GAMEPLAY_CONFIG, GAME_WIDTH, GAME_HEIGHT } from '../config/gameConfig';
+import { WORLD_INITIAL_SPEED } from '../config/worldConfig';
 import { getTextureSize } from '../utils/common';
 
 const SCENERY_CONFIG = {
-  defaultSpeed: 130,
+  defaultSpeed: WORLD_INITIAL_SPEED,
   trainDepth: -20,
   train: {
     initialDelay: 2000,
@@ -53,10 +54,7 @@ const SCENERY_CONFIG = {
 
 export type SceneryPreset = 'game' | 'menu';
 
-const PRESET_DEPTH: Record<
-  SceneryPreset,
-  { foreground: number; traffic: number }
-> = {
+const PRESET_DEPTH: Record<SceneryPreset, { foreground: number; traffic: number }> = {
   game: { foreground: 20, traffic: 21 },
   menu: { foreground: -1, traffic: -1 },
 };
@@ -117,23 +115,21 @@ export class Scenery {
   private burstRemaining: number = 0;
   private burstPerSecond: number = 0;
 
-  constructor(
-    scene: Phaser.Scene,
-    preset: SceneryPreset = 'game',
-    state?: SceneryState
-  ) {
+  constructor(scene: Phaser.Scene, preset: SceneryPreset = 'game', state?: SceneryState) {
     this.scene = scene;
     const depth = PRESET_DEPTH[preset];
     this.trafficDepth = depth.traffic;
 
-    this.tileLayers.push(...SCENERY_CONFIG.tileLayers.map(config => ({
-      sprite: this._createTileSprite(config.key, config.depth),
-      speed: config.speed,
-    })));
+    this.tileLayers.push(
+      ...SCENERY_CONFIG.tileLayers.map((config) => ({
+        sprite: this._createTileSprite(config.key, config.depth),
+        speed: config.speed,
+      }))
+    );
 
-    this.imageLayers.push(...SCENERY_CONFIG.imageLayers.map(config =>
-      this._createImageLayer(config)
-    ));
+    this.imageLayers.push(
+      ...SCENERY_CONFIG.imageLayers.map((config) => this._createImageLayer(config))
+    );
 
     this.train = this._createTrain();
     this._scheduleTrain();
@@ -143,11 +139,13 @@ export class Scenery {
       this.foreground.tilePositionX = state.foregroundX;
       this.restoreTraffic(state.traffic);
     }
-    this.timers.push(this.scene.time.addEvent({
-      delay: SCENERY_CONFIG.foreground.spawnDelay,
-      loop: true,
-      callback: () => this._trySpawnObject(),
-    }));
+    this.timers.push(
+      this.scene.time.addEvent({
+        delay: SCENERY_CONFIG.foreground.spawnDelay,
+        loop: true,
+        callback: () => this._trySpawnObject(),
+      })
+    );
   }
 
   public getState(): SceneryState {
@@ -169,8 +167,7 @@ export class Scenery {
 
   public restoreTraffic(states: TrafficState[]): void {
     states.forEach(({ textureKey, x, y, ...data }) => {
-      const sprite = this.scene.add.image(x, y, textureKey)
-        .setDepth(this.trafficDepth);
+      const sprite = this.scene.add.image(x, y, textureKey).setDepth(this.trafficDepth);
       this.trafficObjects.push({
         ...data,
         bounds: { ...data.bounds },
@@ -199,10 +196,7 @@ export class Scenery {
     });
   }
 
-  public update(
-    delta: number,
-    baseSpeed: number = SCENERY_CONFIG.defaultSpeed
-  ): void {
+  public update(delta: number, baseSpeed: number = SCENERY_CONFIG.defaultSpeed): void {
     const seconds = delta / GAMEPLAY_CONFIG.msPerSecond;
     const shift = baseSpeed * seconds + this._consumeBurst(seconds);
 
@@ -213,16 +207,16 @@ export class Scenery {
   }
 
   public destroy(): void {
-    this.timers.forEach(timer => timer.remove());
+    this.timers.forEach((timer) => timer.remove());
     this.trainTween?.stop();
 
-    this.tileLayers.forEach(layer => layer.sprite.destroy());
-    this.imageLayers.forEach(layer => {
-      layer.images.forEach(image => image.destroy());
+    this.tileLayers.forEach((layer) => layer.sprite.destroy());
+    this.imageLayers.forEach((layer) => {
+      layer.images.forEach((image) => image.destroy());
     });
     this.train.destroy();
     this.foreground.destroy();
-    this.trafficObjects.forEach(object => object.sprite.destroy());
+    this.trafficObjects.forEach((object) => object.sprite.destroy());
 
     this.tileLayers.length = 0;
     this.imageLayers.length = 0;
@@ -231,13 +225,9 @@ export class Scenery {
   }
 
   private _createTileSprite(key: string, depth: number): Phaser.GameObjects.TileSprite {
-    return this.scene.add.tileSprite(
-      GAME_WIDTH / 2,
-      GAME_HEIGHT / 2,
-      GAME_WIDTH,
-      GAME_HEIGHT,
-      key
-    ).setDepth(depth);
+    return this.scene.add
+      .tileSprite(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, key)
+      .setDepth(depth);
   }
 
   private _createImageLayer(config: {
@@ -247,18 +237,18 @@ export class Scenery {
   }): ImageLayer {
     const width = getTextureSize(this.scene, config.keys[0]).width;
     const images = Array.from({ length: config.keys.length * 2 }, (_, index) =>
-      this.scene.add.image(
-        index * width,
-        GAME_HEIGHT / 2,
-        config.keys[index % config.keys.length]
-      ).setOrigin(0, 0.5).setDepth(config.depth)
+      this.scene.add
+        .image(index * width, GAME_HEIGHT / 2, config.keys[index % config.keys.length])
+        .setOrigin(0, 0.5)
+        .setDepth(config.depth)
     );
 
     return { images, width, speed: config.speed };
   }
 
   private _createTrain(): Phaser.GameObjects.Image {
-    const train = this.scene.add.image(0, GAME_HEIGHT / 2, 'bg3')
+    const train = this.scene.add
+      .image(0, GAME_HEIGHT / 2, 'bg3')
       .setDepth(SCENERY_CONFIG.trainDepth)
       .setVisible(false);
     train.x = GAME_WIDTH + train.displayWidth / 2;
@@ -266,15 +256,16 @@ export class Scenery {
   }
 
   private _scheduleTrain(): void {
-    this.timers.push(this.scene.time.delayedCall(
-      SCENERY_CONFIG.train.initialDelay,
-      () => this.spawnTrain()
-    ));
-    this.timers.push(this.scene.time.addEvent({
-      delay: SCENERY_CONFIG.train.spawnInterval,
-      loop: true,
-      callback: () => this.spawnTrain(),
-    }));
+    this.timers.push(
+      this.scene.time.delayedCall(SCENERY_CONFIG.train.initialDelay, () => this.spawnTrain())
+    );
+    this.timers.push(
+      this.scene.time.addEvent({
+        delay: SCENERY_CONFIG.train.spawnInterval,
+        loop: true,
+        callback: () => this.spawnTrain(),
+      })
+    );
   }
 
   private _consumeBurst(seconds: number): number {
@@ -286,15 +277,15 @@ export class Scenery {
   }
 
   private _moveTileLayers(shift: number): void {
-    this.tileLayers.forEach(layer => {
+    this.tileLayers.forEach((layer) => {
       layer.sprite.tilePositionX += shift * layer.speed;
     });
   }
 
   private _moveImageLayers(shift: number): void {
-    this.imageLayers.forEach(layer => {
+    this.imageLayers.forEach((layer) => {
       const layerShift = shift * layer.speed;
-      layer.images.forEach(image => {
+      layer.images.forEach((image) => {
         image.x -= layerShift;
         if (image.x + layer.width <= 0) {
           image.x += layer.width * layer.images.length;
@@ -308,11 +299,7 @@ export class Scenery {
       baseSpeed * SCENERY_CONFIG.foreground.baseSpeedMultiplier * seconds;
   }
 
-  private _updateTraffic(
-    delta: number,
-    baseSpeed: number,
-    seconds: number
-  ): void {
+  private _updateTraffic(delta: number, baseSpeed: number, seconds: number): void {
     for (let i = this.trafficObjects.length - 1; i >= 0; i--) {
       const object = this.trafficObjects[i];
       object.sprite.x -= baseSpeed * object.speedMultiplier * seconds;
@@ -333,10 +320,7 @@ export class Scenery {
 
     object.laneChangeTimer = 0;
     const config = SCENERY_CONFIG.foreground.laneChange;
-    object.laneChangeCooldown = Phaser.Math.Between(
-      config.nextCooldownMin,
-      config.nextCooldownMax
-    );
+    object.laneChangeCooldown = Phaser.Math.Between(config.nextCooldownMin, config.nextCooldownMax);
 
     if (Math.random() < config.turnChance) {
       this._decideNewLane(object);
@@ -345,13 +329,9 @@ export class Scenery {
 
   private _decideNewLane(object: TrafficObject): void {
     const config = SCENERY_CONFIG.foreground;
-    const direction = Math.random() < config.lane.directionChance
-      ? config.lane.right
-      : config.lane.left;
-    const shift = Phaser.Math.Between(
-      config.lane.minShift,
-      config.laneChange.maxShift
-    ) * direction;
+    const direction =
+      Math.random() < config.lane.directionChance ? config.lane.right : config.lane.left;
+    const shift = Phaser.Math.Between(config.lane.minShift, config.laneChange.maxShift) * direction;
 
     const newTarget = Phaser.Math.Clamp(
       object.currentY + shift,
@@ -374,7 +354,7 @@ export class Scenery {
 
     object.moveTimer = 0;
     const step = SCENERY_CONFIG.foreground.lane.step;
-    object.currentY += (object.currentY < object.targetY) ? step : -step;
+    object.currentY += object.currentY < object.targetY ? step : -step;
     object.sprite.y = object.currentY;
   }
 
@@ -398,20 +378,15 @@ export class Scenery {
 
   private _createTrafficObject(): TrafficObject {
     const config = SCENERY_CONFIG.foreground;
-    const index = Phaser.Math.Between(
-      config.trafficIndex.min,
-      config.trafficIndex.max
-    );
+    const index = Phaser.Math.Between(config.trafficIndex.min, config.trafficIndex.max);
     const textureKey = `traffic-${index}`;
     const { width, height } = getTextureSize(this.scene, textureKey);
     const bounds = this._calculateBounds(height);
     const startY = Phaser.Math.Between(bounds.minY, bounds.maxY);
     const halfWidth = width / config.offscreenWidthDivisor;
-    const sprite = this.scene.add.image(
-      GAME_WIDTH + halfWidth,
-      startY,
-      textureKey
-    ).setDepth(this.trafficDepth);
+    const sprite = this.scene.add
+      .image(GAME_WIDTH + halfWidth, startY, textureKey)
+      .setDepth(this.trafficDepth);
 
     return {
       sprite,
@@ -442,11 +417,8 @@ export class Scenery {
 
   private _getSpeedMultiplier(index: number): number {
     const config = SCENERY_CONFIG.foreground;
-    const isEdge = index === config.trafficIndex.min
-      || index === config.trafficIndex.max;
-    const range = isEdge
-      ? config.speedRanges.slow
-      : config.speedRanges.fast;
+    const isEdge = index === config.trafficIndex.min || index === config.trafficIndex.max;
+    const range = isEdge ? config.speedRanges.slow : config.speedRanges.fast;
 
     return Phaser.Math.FloatBetween(range.min, range.max);
   }

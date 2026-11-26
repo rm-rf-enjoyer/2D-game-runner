@@ -59,7 +59,7 @@ function createDirtConfig(
     quantity,
     tint: DIRT_TINTS,
     scale,
-    alpha: { start: 1, end: 0 },
+    alpha: { start: 1, end: 1 },
     gravityY: 220,
   };
 }
@@ -88,7 +88,7 @@ const LANDING_DUST_CONFIG = {
   speedY: { min: -35, max: 5 },
   tint: DIRT_TINTS,
   scale: { min: 1, max: 2 },
-  alpha: { start: 1, end: 0 },
+  alpha: { start: 1, end: 1 },
   gravityY: 260,
   quantity: 12,
 };
@@ -101,17 +101,15 @@ export class PlayerEffects {
   constructor(scene: Phaser.Scene, sprite: Phaser.Physics.Arcade.Sprite) {
     this.scene = scene;
     this.sprite = sprite;
-    this.wheels = WHEEL_OFFSETS.map(offset => scene.add.particles(
-      0,
-      0,
-      'pixel-particle',
-      {
-        ...HOVER_DIRT_CONFIG,
-        follow: sprite,
-        followOffset: offset,
-        roundPixels: true,
-      }
-    ).setDepth(EXHAUST_CONFIG.depth));
+    this.wheels = WHEEL_OFFSETS.map((offset) =>
+      scene.add
+        .particles(0, 0, 'pixel-particle', {
+          ...HOVER_DIRT_CONFIG,
+          follow: sprite,
+          followOffset: offset,
+        })
+        .setDepth(EXHAUST_CONFIG.depth)
+    );
   }
 
   public playJumpSound(): void {
@@ -123,11 +121,11 @@ export class PlayerEffects {
   }
 
   public startDash(): void {
-    this.wheels.forEach(wheel => wheel.setConfig(DASH_DIRT_CONFIG));
+    this.wheels.forEach((wheel) => wheel.setConfig(DASH_DIRT_CONFIG));
   }
 
   public endDash(): void {
-    this.wheels.forEach(wheel => wheel.setConfig(HOVER_DIRT_CONFIG));
+    this.wheels.forEach((wheel) => wheel.setConfig(HOVER_DIRT_CONFIG));
   }
 
   private _playSound(): void {
@@ -135,16 +133,16 @@ export class PlayerEffects {
   }
 
   public stopExhaust(): void {
-    this.wheels.forEach(wheel => wheel.stop());
+    this.wheels.forEach((wheel) => wheel.stop());
   }
 
   public emitDust(): void {
-    const dust = this.scene.add.particles(
-      this.sprite.x,
-      this.sprite.y + DUST_CONFIG.yOffset,
-      'pixel-particle',
-      { ...LANDING_DUST_CONFIG, emitting: false, roundPixels: true }
-    ).setDepth(DUST_CONFIG.depth);
+    const dust = this.scene.add
+      .particles(this.sprite.x, this.sprite.y + DUST_CONFIG.yOffset, 'pixel-particle', {
+        ...LANDING_DUST_CONFIG,
+        emitting: false,
+      })
+      .setDepth(DUST_CONFIG.depth);
 
     dust.explode(LANDING_DUST_CONFIG.quantity);
     this.scene.time.delayedCall(DUST_CONFIG.cleanupDelay, () => dust.destroy());

@@ -18,6 +18,7 @@ const HOVER_STEPS: HoverStep[] = [
 
 export class PlayerHover {
   private readonly sprite: Phaser.Physics.Arcade.Sprite;
+  private readonly body: Phaser.Physics.Arcade.Body;
   private readonly timer: Phaser.Time.TimerEvent;
   private readonly canStep: () => boolean;
   private state: number = 0;
@@ -25,9 +26,11 @@ export class PlayerHover {
   constructor(
     scene: Phaser.Scene,
     sprite: Phaser.Physics.Arcade.Sprite,
+    body: Phaser.Physics.Arcade.Body,
     canStep: () => boolean
   ) {
     this.sprite = sprite;
+    this.body = body;
     this.canStep = canStep;
     this.timer = scene.time.addEvent({
       delay: PLAYER_CONFIG.hoverDelay,
@@ -35,7 +38,7 @@ export class PlayerHover {
       callback: () => {
         if (!this.canStep()) return;
         this._step();
-      }
+      },
     });
   }
 
@@ -53,7 +56,7 @@ export class PlayerHover {
     if (step.x !== undefined) this.sprite.x += step.x;
     if (step.y !== undefined) this.sprite.y += step.y;
     if (step.bodyY !== undefined) {
-      this.sprite.body.setOffset(PLAYER_CONFIG.bodyOffset.x, step.bodyY);
+      this.body.setOffset(PLAYER_CONFIG.bodyOffset.x, step.bodyY);
     }
 
     this.state = (this.state + 1) % HOVER_STEPS.length;

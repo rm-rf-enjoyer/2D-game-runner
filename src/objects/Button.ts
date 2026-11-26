@@ -25,7 +25,7 @@ export class Button {
   constructor(config: ButtonConfig) {
     this.scene = config.scene;
     this.onClick = config.onClick;
-    
+
     const x = Math.round(config.x);
     const y = Math.round(config.y);
     const width = Math.round(config.width);
@@ -37,21 +37,9 @@ export class Button {
     const rightW = getTextureSize(this.scene, 'btn-normal-right').width;
     const centerW = Math.round(width - leftW - rightW);
 
-    this.left = this._createSideImage(
-      'btn-normal-left',
-      -width / 2 + leftW / 2
-    );
-    this.center = this.scene.add.tileSprite(
-      0,
-      0,
-      centerW,
-      height,
-      'btn-normal-center'
-    );
-    this.right = this._createSideImage(
-      'btn-normal-right',
-      width / 2 - rightW / 2
-    );
+    this.left = this._createSideImage('btn-normal-left', -width / 2 + leftW / 2);
+    this.center = this.scene.add.tileSprite(0, 0, centerW, height, 'btn-normal-center');
+    this.right = this._createSideImage('btn-normal-right', width / 2 - rightW / 2);
 
     this.container.add([this.left, this.center, this.right]);
 
@@ -65,25 +53,22 @@ export class Button {
     this.hitArea.on('pointerout', () => this._release(false));
   }
 
-  private _createSideImage(
-    key: string,
-    x: number
-  ): Phaser.GameObjects.Image {
+  private _createSideImage(key: string, x: number): Phaser.GameObjects.Image {
     return this.scene.add.image(x, 0, key);
   }
 
   private _press(): void {
     if (this.isPressed) return;
     this.isPressed = true;
-    
+
     this._setTextureSet('pressed');
-    this.scene.sound.play('sfx-click', { volume: 1 }); 
+    this.scene.sound.play('sfx-click', { volume: 1 });
   }
 
   private _release(invoke: boolean): void {
     if (!this.isPressed) return;
     this.isPressed = false;
-    
+
     this._setTextureSet('normal');
 
     if (invoke) {
@@ -96,7 +81,7 @@ export class Button {
     this.center.setTexture(`btn-${state}-center`);
     this.right.setTexture(`btn-${state}-right`);
   }
-  
+
   public setDepth(depth: number): this {
     this.container.setDepth(depth);
     this.hitArea.setDepth(depth);

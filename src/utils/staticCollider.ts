@@ -12,14 +12,7 @@ export function createStaticCollider(
   width: number,
   height: number
 ): StaticCollider {
-  const collider = scene.add.rectangle(
-    x,
-    y,
-    width,
-    height,
-    PIPE_CONFIG.debugColor,
-    0
-  );
+  const collider = scene.add.rectangle(x, y, width, height, PIPE_CONFIG.debugColor, 0);
   scene.physics.add.existing(collider, true);
   group.add(collider);
   syncStaticCollider(collider);
@@ -31,9 +24,7 @@ export function syncStaticCollider(collider: StaticCollider): void {
   body.updateFromGameObject();
 }
 
-export function getStaticColliderBounds(
-  collider: StaticCollider
-): Phaser.Geom.Rectangle {
+export function getStaticColliderBounds(collider: StaticCollider): Phaser.Geom.Rectangle {
   const body = collider.body as Phaser.Physics.Arcade.StaticBody;
   return getBodyBounds(body);
 }

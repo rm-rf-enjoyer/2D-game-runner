@@ -1,10 +1,10 @@
 import Phaser from 'phaser';
-import { ChunkDefinition } from '../chunks/ChunkTemplate';
+import type { ChunkDefinition } from '../chunks/types';
 import { Phase, PhaseOptions } from './Phase';
 import {
   PHASE1_PIPE_40_NO_GAP_CHUNK,
   PHASE1_PIPE_11_WITH_GAP_4_CHUNK,
-  PHASE1_PIPE_40_WITH_GAP_5_CHUNK
+  PHASE1_PIPE_40_WITH_GAP_5_CHUNK,
 } from '../chunks/phase1PipeChunks';
 import {
   PHASE1_TILE_10_RAISED_3_CHUNK,
@@ -14,7 +14,7 @@ import {
   PHASE1_TILE_12_WITH_FAN_AT_END_CHUNK,
   PHASE1_TILE_12_WITH_FAN_CHUNK,
   PHASE1_TILE_1_WITH_GAP_6_CHUNK,
-  PHASE1_TILE_12_WITH_GAP_5_CHUNK
+  PHASE1_TILE_12_WITH_GAP_5_CHUNK,
 } from '../chunks/phase1TileChunks';
 import { repeat } from '../utils/common';
 

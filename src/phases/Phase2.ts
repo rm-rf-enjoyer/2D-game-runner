@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ChunkDefinition } from '../chunks/ChunkTemplate';
+import type { ChunkDefinition } from '../chunks/types';
 import { PHASE1_PIPE_40_WITH_GAP_5_CHUNK } from '../chunks/phase1PipeChunks';
 import {
   createPhase2FinalPipeChunk,
@@ -10,7 +10,7 @@ import {
   createPhase2Tile12DoubleFanChunk,
   createPhase2Tile12Chunk,
   createPhase2Tile14FanMiddleChunk,
-  createPhase2Tile5Chunk
+  createPhase2Tile5Chunk,
 } from '../chunks/phase2Chunks';
 import { Phase, PhaseOptions } from './Phase';
 
