@@ -101,6 +101,5 @@ export class Button {
 
   public destroy(): void {
     this.container.destroy();
-    this.hitArea.destroy();
   }
 }

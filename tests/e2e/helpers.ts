@@ -13,12 +13,22 @@ export interface DebugScene {
     listenerCount(event: string): number;
     keyboard?: { listenerCount(event: string): number };
   };
-  player?: {
-    isDead: boolean;
-    isDashing: boolean;
-    sprite: { y: number; texture: { key: string } };
-  };
-  score?: { text: string };
+}
+
+export interface DisplayNode {
+  type: string;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  visible?: boolean;
+  depth?: number;
+  originX?: number;
+  text?: string;
+  fontSize?: number;
+  lineSpacing?: number;
+  textureKey?: string;
+  children?: DisplayNode[];
 }
 
 export interface SceneSnapshot {
@@ -56,12 +66,17 @@ export async function settleFrames(page: Page, frames = 3): Promise<void> {
   );
 }
 
-export async function openGame(page: Page): Promise<void> {
+export async function openMenu(page: Page): Promise<void> {
   await page.goto('/');
   await page.waitForFunction(
     (key) => Boolean(window.__game && window.__game.scene.isActive(key)),
     MENU_SCENE
   );
+  await settleFrames(page, 5);
+}
+
+export async function openGame(page: Page): Promise<void> {
+  await openMenu(page);
 
   await page.evaluate(
     ([menuKey, gameKey]) => {
@@ -95,6 +110,53 @@ export async function gamePoint(page: Page, x: number, y: number) {
     },
     [x, y]
   );
+}
+
+export async function snapshotDisplay(page: Page, sceneKey: string): Promise<DisplayNode[]> {
+  return page.evaluate((key) => {
+    const describe = (value: unknown): DisplayNode => {
+      const obj = value as Record<string, unknown>;
+      const node: DisplayNode = {
+        type: typeof obj.type === 'string' ? obj.type : '',
+        x: typeof obj.x === 'number' ? obj.x : 0,
+        y: typeof obj.y === 'number' ? obj.y : 0,
+      };
+
+      if (typeof obj.width === 'number') node.width = obj.width;
+      if (typeof obj.height === 'number') node.height = obj.height;
+      if (typeof obj.visible === 'boolean') node.visible = obj.visible;
+      if (typeof obj.depth === 'number') node.depth = obj.depth;
+      if (typeof obj.originX === 'number') node.originX = obj.originX;
+      if (typeof obj.text === 'string') node.text = obj.text;
+      if (typeof obj._fontSize === 'number') node.fontSize = obj._fontSize;
+      if (typeof obj.lineSpacing === 'number') node.lineSpacing = obj.lineSpacing;
+
+      const texture = obj.texture as Record<string, unknown> | undefined;
+      if (texture && typeof texture.key === 'string') node.textureKey = texture.key;
+      if (Array.isArray(obj.list)) node.children = obj.list.map((child) => describe(child));
+
+      return node;
+    };
+
+    const scene = window.__game!.scene.getScene(key) as unknown as DebugScene;
+    return scene.children.list.map((item) => describe(item));
+  }, sceneKey);
+}
+
+export function flattenDisplay(nodes: DisplayNode[]): DisplayNode[] {
+  return nodes.flatMap((node) => [node, ...flattenDisplay(node.children ?? [])]);
+}
+
+export function findText(nodes: DisplayNode[], text: string): DisplayNode | undefined {
+  return flattenDisplay(nodes).find((node) => node.text === text);
+}
+
+export function findTexture(nodes: DisplayNode[], textureKey: string): DisplayNode | undefined {
+  return flattenDisplay(nodes).find((node) => node.textureKey === textureKey);
+}
+
+export function findPanel(nodes: DisplayNode[], tileCount: number): DisplayNode | undefined {
+  return flattenDisplay(nodes).find((node) => node.children?.length === tileCount);
 }
 
 export async function snapshotUiScene(page: Page): Promise<SceneSnapshot> {

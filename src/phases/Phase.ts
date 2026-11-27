@@ -9,6 +9,7 @@ import type { SpawnTask } from './PhaseFlow.ts';
 export interface PhaseOptions {
   startX?: number;
   maxChunks?: number;
+  initialChunks?: number;
   onComplete?: () => void;
 }
 

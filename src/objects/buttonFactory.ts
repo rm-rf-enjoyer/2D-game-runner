@@ -28,6 +28,9 @@ export interface MenuButtonOptions {
   y: number;
   text: string;
   onClick: () => void;
+  width?: number;
+  labelTint?: number;
+  labelFont?: string;
 }
 
 export interface MenuButtonsOptions {
@@ -45,16 +48,16 @@ export function createMenuButton(config: MenuButtonOptions): MenuButtonReturn {
     scene,
     x,
     y,
-    width: BUTTON_WIDTH,
+    width: config.width ?? BUTTON_WIDTH,
     height: texture.height,
     onClick,
   }).setDepth(DEPTH_BUTTON);
 
   const label = scene.add
-    .bitmapText(x, y, FONT_KEY, text, FONT_SIZE)
+    .bitmapText(x, y, config.labelFont ?? FONT_KEY, text, FONT_SIZE)
     .setOrigin(0.5)
     .setScale(1)
-    .setTint(LABEL_TINT)
+    .setTint(config.labelTint ?? LABEL_TINT)
     .setDepth(DEPTH_LABEL);
 
   return { button, label };

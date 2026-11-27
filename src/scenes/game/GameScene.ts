@@ -15,17 +15,18 @@ import { rectToAabb } from '../../systems/CollisionRules.ts';
 import type { AABB } from '../../systems/CollisionRules.ts';
 import { Phase1 } from '../../phases/Phase1.ts';
 import { Phase2 } from '../../phases/Phase2.ts';
-import type { UIScene } from '../UIScene.ts';
+import { UIScene } from '../UIScene.ts';
 import { DeathEffects } from './DeathEffects.ts';
 import { InputRouter } from './InputRouter.ts';
 import { ScoreTracker } from './ScoreTracker.ts';
-import { DEATH_CONFIG, GAME_MUSIC } from './config.ts';
+import { GAME_MUSIC } from './config.ts';
 
 const BLOOD_COLORS = [getPaletteColor(6), getPaletteColor(5)];
 const SCORE_TINT_COLOR = getPaletteColor(14);
+const DEATH_SOUND_VOLUME = 0.6;
 
 export class GameScene extends Phaser.Scene {
-  private isDead = false;
+  private isGameOver = false;
   private readonly playerBounds = new Phaser.Geom.Rectangle();
   private readonly playerAabb: AABB = { left: 0, top: 0, right: 0, bottom: 0 };
 
@@ -39,12 +40,17 @@ export class GameScene extends Phaser.Scene {
 
   private readonly music = new SceneMusic(GAME_MUSIC);
 
+  private get uiScene(): UIScene | undefined {
+    const scene: unknown = this.scene.get(SCENE_KEYS.UI);
+    return scene instanceof UIScene ? scene : undefined;
+  }
+
   constructor() {
     super(SCENE_KEYS.GAME);
   }
 
   public create(data: { scenery?: SceneryState } = {}): void {
-    this.isDead = false;
+    this.isGameOver = false;
 
     this._setupPlayer();
     this._createWorld();
@@ -62,7 +68,7 @@ export class GameScene extends Phaser.Scene {
     const currentSpeed = this.world.speed;
     this.rain.update(delta, currentSpeed, this.world.isDashActive);
 
-    if (this.isDead) return;
+    if (this.isGameOver) return;
 
     this.world.update(delta);
     this.scenery.update(delta, this.world.speed);
@@ -71,7 +77,7 @@ export class GameScene extends Phaser.Scene {
     this._handleCollisions();
     this._handlePitFall();
 
-    if (this.isDead) return;
+    if (this.isGameOver) return;
 
     this.score.update(currentSpeed, delta);
   }
@@ -172,39 +178,35 @@ export class GameScene extends Phaser.Scene {
   }
 
   private _handleLevelComplete(): void {
-    if (this.isDead) return;
-    this._goToMenu();
+    if (this.isGameOver) return;
+    this.isGameOver = true;
+    this._finishGame();
   }
 
   private _onHit(cause: DeathCause): void {
-    if (this.isDead) return;
-    this.isDead = true;
+    if (this.isGameOver) return;
+    this.isGameOver = true;
 
-    this._stopGameplay();
+    this.sound.play(ASSET_KEYS.audio.death, { volume: DEATH_SOUND_VOLUME });
     this.player.die(cause);
-    this.score.render();
     this.deathEffects.play(cause, this.player.sprite.x, this.player.sprite.y);
 
-    this.time.delayedCall(DEATH_CONFIG.restartDelay, () => this._goToMenu());
+    this._finishGame();
   }
 
-  private _stopGameplay(): void {
-    this.sound.play(ASSET_KEYS.audio.death, { volume: DEATH_CONFIG.soundVolume });
+  private _finishGame(): void {
     this.inputRouter.disable();
     this.music.stop();
-  }
+    this.score.render();
 
-  private _goToMenu(): void {
-    this.scene.stop(SCENE_KEYS.UI);
-    this.scene.start(SCENE_KEYS.MENU, { scenery: this.scenery.getState() });
+    this.uiScene?.openSaveDialog(this.score.text);
   }
 
   private _onAppPaused(): void {
-    if (this.isDead) return;
+    if (this.isGameOver) return;
     if (!this.scene.isActive(SCENE_KEYS.GAME)) return;
 
     this.scene.pause(SCENE_KEYS.GAME);
-    const uiScene = this.scene.get(SCENE_KEYS.UI) as UIScene | null;
-    uiScene?.openPause();
+    this.uiScene?.openPause();
   }
 }

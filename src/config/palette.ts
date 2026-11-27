@@ -1,4 +1,4 @@
-import paletteSource from '../assets/bg/palette.gpl?raw';
+import paletteSource from '../assets/palette/palette.gpl?raw';
 
 const PALETTE_COLOR_PATTERN = /^\s*(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})\s/;
 

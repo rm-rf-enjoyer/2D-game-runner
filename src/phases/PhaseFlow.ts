@@ -20,6 +20,7 @@ export interface PhaseStep {
 export interface PhaseFlowOptions {
   startX?: number;
   maxChunks?: number;
+  initialChunks?: number;
 }
 
 interface LogicalChunk {
@@ -33,6 +34,7 @@ export class PhaseFlow {
   private readonly sequence: readonly ChunkDefinition[];
   private readonly baseY: number;
   private readonly maxChunks: number;
+  private readonly activeTarget: number;
   private readonly chunks: LogicalChunk[] = [];
   private spawnedChunks = 0;
   private totalShift = 0;
@@ -44,6 +46,10 @@ export class PhaseFlow {
     this.baseY = baseY;
     this.nextX = options.startX ?? PIPE_CONFIG.spawn.startX;
     this.maxChunks = options.maxChunks ?? sequence.length;
+    this.activeTarget = Math.max(
+      1,
+      Math.min(options.initialChunks ?? this.maxChunks, this.maxChunks)
+    );
   }
 
   public init(): SpawnTask[] {
@@ -70,7 +76,11 @@ export class PhaseFlow {
   private fillAhead(): SpawnTask[] {
     const spawns: SpawnTask[] = [];
 
-    while (!this.completed && this.spawnedChunks < this.maxChunks) {
+    while (
+      !this.completed &&
+      this.spawnedChunks < this.maxChunks &&
+      this.chunks.length < this.activeTarget
+    ) {
       const definition = this.sequence[this.spawnedChunks % this.sequence.length];
       spawns.push(this.spawn(definition));
     }
@@ -79,13 +89,14 @@ export class PhaseFlow {
   }
 
   private spawn(definition: ChunkDefinition): SpawnTask {
-    const startX = this.nextX;
+    const logicalStartX = this.nextX;
+    const startX = logicalStartX - this.totalShift;
     const id = this.nextId++;
-    const rightEdge = getChunkRightEdge(definition, startX) - this.totalShift;
+    const rightEdge = getChunkRightEdge(definition, startX);
 
     this.chunks.push({ id, rightEdge });
 
-    this.nextX = startX + definition.widthTiles * PLATFORM_TILE_SIZE;
+    this.nextX = logicalStartX + definition.widthTiles * PLATFORM_TILE_SIZE;
     this.spawnedChunks += 1;
 
     return {

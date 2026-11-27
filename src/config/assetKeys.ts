@@ -14,6 +14,7 @@ export const ASSET_KEYS = {
       `btn-${state}-${part}`,
     pauseButton: 'btn-pause',
     font: 'pixel-font',
+    fontLower: 'pixel-font-lower',
     pixel: 'pixel-particle',
     speedLine: 'speed-line',
     player: 'player',

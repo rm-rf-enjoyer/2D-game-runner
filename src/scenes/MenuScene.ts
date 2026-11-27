@@ -3,21 +3,33 @@ import { Scenery, SceneryState } from '../objects/Scenery.ts';
 import { MenuPanel } from '../objects/MenuPanel.ts';
 import { Rain } from '../objects/Rain.ts';
 import { GAME_WIDTH, GAME_HEIGHT, MUSIC_VOLUME } from '../config/gameConfig.ts';
+import { getPanelBounds } from '../config/panelConfig.ts';
 import { SCENE_KEYS } from '../config/sceneKeys.ts';
 import { ASSET_KEYS } from '../config/assetKeys.ts';
 import { WORLD_INITIAL_SPEED } from '../config/worldConfig.ts';
-import { createMenuButtons, MenuButtonConfig } from '../objects/buttonFactory.ts';
+import { createMenuButtons, MenuButtonConfig, MenuButtonReturn } from '../objects/buttonFactory.ts';
+import { createPanelTitle } from '../objects/panelTitleFactory.ts';
+import { RecordsPanel } from '../objects/RecordsPanel.ts';
 import { toggleSoundMuted } from '../utils/settings.ts';
 
-const PANEL_TILES = 6;
-const BTN_START_Y = 95;
-const BTN_STEP = 40;
+const MENU_CONFIG = {
+  title: 'menu',
+  panel: { tiles: 6, depth: 5 },
+  buttons: {
+    startY: 95,
+    step: 40,
+    labels: { play: 'PLAY', sound: 'SOUND', records: 'RECORDS' },
+  },
+} as const;
 const MENU_MUSIC_KEY = ASSET_KEYS.audio.menuMusic;
 
 export class MenuScene extends Phaser.Scene {
   private scenery!: Scenery;
   private rain!: Rain;
-  private panel!: MenuPanel;
+  private panel: MenuPanel | null = null;
+  private title: Phaser.GameObjects.BitmapText | null = null;
+  private menuButtons: MenuButtonReturn[] = [];
+  private recordsPanel: RecordsPanel | null = null;
   private music?: Phaser.Sound.BaseSound;
 
   constructor() {
@@ -38,32 +50,67 @@ export class MenuScene extends Phaser.Scene {
   private setupUI(state?: SceneryState): void {
     this.scenery = new Scenery(this, 'menu', state);
     this.rain = new Rain(this, 'menu');
+    this.recordsPanel = null;
+    this._buildMenu();
+  }
 
+  private _buildMenu(): void {
     this.panel = new MenuPanel({
       scene: this,
       centerX: GAME_WIDTH / 2,
       centerY: GAME_HEIGHT / 2,
-      widthTiles: PANEL_TILES,
+      widthTiles: MENU_CONFIG.panel.tiles,
     });
-    this.panel.setDepth(5);
+    this.panel.setDepth(MENU_CONFIG.panel.depth);
 
-    const configs: MenuButtonConfig[] = [
-      { text: 'PLAY', yOffset: 0, onClick: () => this.handlePlay() },
-      {
-        text: 'SOUND',
-        yOffset: BTN_STEP,
-        onClick: () => this.handleSound(),
-      },
-    ];
+    this.title = createPanelTitle({
+      scene: this,
+      centerX: GAME_WIDTH / 2,
+      panelTop: this._getPanelTop(),
+      text: MENU_CONFIG.title,
+      depth: MENU_CONFIG.panel.depth + 1,
+    });
 
-    createMenuButtons(
+    this.menuButtons = createMenuButtons(
       {
         scene: this,
         centerX: GAME_WIDTH / 2,
-        startY: BTN_START_Y,
+        startY: MENU_CONFIG.buttons.startY,
       },
-      configs
+      this._getButtonConfigs()
     );
+  }
+
+  private _getButtonConfigs(): MenuButtonConfig[] {
+    const { step, labels } = MENU_CONFIG.buttons;
+
+    return [
+      { text: labels.play, yOffset: 0, onClick: () => this.handlePlay() },
+      { text: labels.sound, yOffset: step, onClick: () => this.handleSound() },
+      { text: labels.records, yOffset: step * 2, onClick: () => this.handleRecords() },
+    ];
+  }
+
+  private _getPanelTop(): number {
+    return getPanelBounds({
+      centerX: GAME_WIDTH / 2,
+      centerY: GAME_HEIGHT / 2,
+      widthTiles: MENU_CONFIG.panel.tiles,
+      heightTiles: MENU_CONFIG.panel.tiles,
+    }).top;
+  }
+
+  private _destroyMenu(): void {
+    this.panel?.destroy();
+    this.panel = null;
+    this.title?.destroy();
+    this.title = null;
+
+    this.menuButtons.forEach(({ button, label }) => {
+      button.destroy();
+      label.destroy();
+    });
+    this.menuButtons = [];
   }
 
   private setupMusic(): void {
@@ -103,5 +150,20 @@ export class MenuScene extends Phaser.Scene {
 
   private handleSound(): void {
     this.sound.mute = toggleSoundMuted(this.sound.mute);
+  }
+
+  private handleRecords(): void {
+    if (this.recordsPanel) return;
+
+    this._destroyMenu();
+    this.recordsPanel = new RecordsPanel(this, () => this.closeRecords());
+  }
+
+  private closeRecords(): void {
+    if (!this.recordsPanel) return;
+
+    this.recordsPanel.destroy();
+    this.recordsPanel = null;
+    this._buildMenu();
   }
 }

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { ASSET_KEYS } from '../config/assetKeys.ts';
+import { PANEL_TILE_SIZE } from '../config/panelConfig.ts';
 
-const TILE_SIZE = 32;
 const DEFAULT_TILES = 6;
 
 export interface MenuPanelOptions {
@@ -26,16 +26,16 @@ export class MenuPanel {
     const heightTiles = options.heightTiles ?? DEFAULT_TILES;
     this.root = options.scene.add.container(0, 0);
 
-    const totalWidth = widthTiles * TILE_SIZE;
-    const totalHeight = heightTiles * TILE_SIZE;
-    const startX = options.centerX - totalWidth / 2 + TILE_SIZE / 2;
-    const startY = options.centerY - totalHeight / 2 + TILE_SIZE / 2;
+    const totalWidth = widthTiles * PANEL_TILE_SIZE;
+    const totalHeight = heightTiles * PANEL_TILE_SIZE;
+    const startX = options.centerX - totalWidth / 2 + PANEL_TILE_SIZE / 2;
+    const startY = options.centerY - totalHeight / 2 + PANEL_TILE_SIZE / 2;
 
     for (let row = 0; row < heightTiles; row++) {
       for (let col = 0; col < widthTiles; col++) {
         const key = this._getTileKey(row, col, heightTiles, widthTiles);
-        const x = startX + col * TILE_SIZE;
-        const y = startY + row * TILE_SIZE;
+        const x = startX + col * PANEL_TILE_SIZE;
+        const y = startY + row * PANEL_TILE_SIZE;
         this.root.add(options.scene.add.image(x, y, key));
       }
     }

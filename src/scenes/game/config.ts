@@ -22,11 +22,6 @@ export const GAME_MUSIC = {
   stopKeys: [ASSET_KEYS.audio.menuMusic],
 };
 
-export const DEATH_CONFIG = {
-  restartDelay: 1500,
-  soundVolume: 0.6,
-};
-
 export const BLOOD_EFFECT_CONFIG = {
   particleCount: 25,
   puddleDelay: 400,

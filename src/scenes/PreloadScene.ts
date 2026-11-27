@@ -232,13 +232,19 @@ export class PreloadScene extends Phaser.Scene {
 
   private _createFont(): void {
     const { font } = PRELOAD_CONFIG;
+    this._registerFont(ASSET_KEYS.texture.font, font.chars);
+    this._registerFont(ASSET_KEYS.texture.fontLower, font.chars.toLowerCase());
+  }
+
+  private _registerFont(key: string, chars: string): void {
+    const { font } = PRELOAD_CONFIG;
     this.cache.bitmapFont.add(
-      ASSET_KEYS.texture.font,
+      key,
       Phaser.GameObjects.RetroFont.Parse(this, {
         image: font.image,
         width: font.width,
         height: font.height,
-        chars: font.chars,
+        chars,
         charsPerRow: font.charsPerRow,
         'offset.x': 0,
         'offset.y': 0,
