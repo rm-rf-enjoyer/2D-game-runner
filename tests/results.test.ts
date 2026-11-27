@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, test } from 'node:test';
-import { getResults, getTopResults, saveResult } from '../src/utils/results.ts';
+import { getLocalRecords, getTopLocalRecords } from '../src/services/records/localRepository.ts';
 
 class MemoryStorage {
   private readonly data = new Map<string, string>();
@@ -25,42 +25,59 @@ afterEach(() => {
   Reflect.deleteProperty(globalThis, 'localStorage');
 });
 
-test('saved results are appended and read back', () => {
-  assert.deepEqual(getResults(), []);
+test('legacy results are migrated and read back', () => {
+  localStorage.setItem(
+    'runGame:results',
+    JSON.stringify([
+      { name: 'HERO', score: '12 m', savedAt: '2026-01-01T00:00:00.000Z' },
+      { name: 'BOB', score: '30 m', savedAt: '2026-01-02T00:00:00.000Z' },
+    ])
+  );
 
-  saveResult('HERO', '12 m');
-  saveResult('BOB', '30 m');
-
-  const results = getResults();
-  assert.equal(results.length, 2);
-  assert.equal(results[0].name, 'HERO');
-  assert.equal(results[0].score, '12 m');
-  assert.equal(results[1].name, 'BOB');
-  assert.ok(results[0].savedAt);
+  const records = getLocalRecords();
+  assert.equal(records.length, 2);
+  assert.equal(records[0].name, 'HERO');
+  assert.equal(records[0].scoreMeters, 12);
+  assert.equal(records[1].scoreMeters, 30);
+  assert.ok(records[0].savedAt);
 });
 
-test('corrupted stored results are ignored', () => {
-  localStorage.setItem('runGame:results', '{broken');
-
-  assert.deepEqual(getResults(), []);
-
-  saveResult('HERO', '5 m');
-  assert.equal(getResults().length, 1);
+test('corrupted stored records are ignored', () => {
+  localStorage.setItem('runGame:records.v1', '{broken');
+  assert.deepEqual(getLocalRecords(), []);
 });
 
 test('top results are sorted by score and limited', () => {
   localStorage.setItem(
-    'runGame:results',
+    'runGame:records.v1',
     JSON.stringify([
-      { name: 'first', score: '12 m', savedAt: '2026-01-01T00:00:00.000Z' },
-      { name: 'best', score: '30 m', savedAt: '2026-01-02T00:00:00.000Z' },
-      { name: 'middle', score: '20 m', savedAt: '2026-01-03T00:00:00.000Z' },
+      {
+        id: '1',
+        name: 'first',
+        scoreMeters: 12,
+        savedAt: '2026-01-01T00:00:00.000Z',
+        syncedAt: null,
+      },
+      {
+        id: '2',
+        name: 'best',
+        scoreMeters: 30,
+        savedAt: '2026-01-02T00:00:00.000Z',
+        syncedAt: null,
+      },
+      {
+        id: '3',
+        name: 'middle',
+        scoreMeters: 20,
+        savedAt: '2026-01-03T00:00:00.000Z',
+        syncedAt: null,
+      },
     ])
   );
 
   assert.deepEqual(
-    getTopResults(2).map((result) => result.name),
+    getTopLocalRecords(2).map((record) => record.name),
     ['best', 'middle']
   );
-  assert.deepEqual(getTopResults(0), []);
+  assert.deepEqual(getTopLocalRecords(0), []);
 });

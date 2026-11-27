@@ -11,6 +11,7 @@ import { MenuScene } from './scenes/MenuScene.ts';
 import { GameScene } from './scenes/game/GameScene.ts';
 import { UIScene } from './scenes/UIScene.ts';
 import { AppLifecycle } from './systems/AppLifecycle.ts';
+import { getRecordsService } from './services/records/recordsService.ts';
 
 declare global {
   interface Window {
@@ -33,6 +34,8 @@ if (Capacitor.isNativePlatform()) {
 }
 
 const lifecycle = new AppLifecycle(game);
+const records = getRecordsService();
+records.startAutoTasks();
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) lifecycle.pause('visibility');
@@ -44,7 +47,11 @@ window.addEventListener('focus', () => lifecycle.resume('focus'));
 
 if (Capacitor.isNativePlatform()) {
   App.addListener('appStateChange', ({ isActive }) => {
-    if (isActive) lifecycle.resume('native');
-    else lifecycle.pause('native');
+    if (isActive) {
+      lifecycle.resume('native');
+      void records.flush();
+    } else {
+      lifecycle.pause('native');
+    }
   });
 }

@@ -20,3 +20,22 @@ export function getPaletteColor(index: number): number {
   }
   return color;
 }
+
+export const PALETTE = {
+  night: getPaletteColor(0),
+  shadow: getPaletteColor(1),
+  navy: getPaletteColor(2),
+  steel: getPaletteColor(3),
+  plum: getPaletteColor(4),
+  magenta: getPaletteColor(5),
+  red: getPaletteColor(6),
+  violet: getPaletteColor(7),
+  green: getPaletteColor(8),
+  dustyRose: getPaletteColor(9),
+  sand: getPaletteColor(10),
+  orange: getPaletteColor(11),
+  cyan: getPaletteColor(12),
+  yellow: getPaletteColor(13),
+  white: getPaletteColor(14),
+  teal: getPaletteColor(15),
+} as const;

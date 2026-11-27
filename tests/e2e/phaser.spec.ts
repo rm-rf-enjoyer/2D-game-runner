@@ -217,11 +217,14 @@ test('save button stores the result with the entered name', async ({ page }) => 
   await page.mouse.click(savePoint.x, savePoint.y);
   await page.waitForFunction((key) => window.__game!.scene.isActive(key), MENU_SCENE);
 
-  const results = await page.evaluate(() => JSON.parse(localStorage.getItem('runGame:results')!));
+  const results = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('runGame:records.v1')!)
+  );
   expect(results).toHaveLength(1);
   expect(results[0].name).toBe('Hero');
-  expect(results[0].score).toBe(score);
+  expect(results[0].scoreMeters).toBe(Number.parseInt(score ?? '', 10));
   expect(results[0].savedAt).toBeTruthy();
+  expect(results[0].syncedAt).toBeNull();
 });
 
 test('menu and pause panels show centered titles', async ({ page }) => {
@@ -269,7 +272,32 @@ test('menu and pause panels show centered titles', async ({ page }) => {
   });
 });
 
-test('records button replaces the menu panel and shows ranked results', async ({ page }) => {
+test('records panel switches between device and global results', async ({ page }) => {
+  await page.route('**/v1/records/**', (route) => {
+    if (route.request().url().includes('/batch')) {
+      return route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ acceptedIds: [], duplicates: [] }),
+      });
+    }
+
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        records: [
+          {
+            id: '99999999-9999-4999-8999-999999999999',
+            name: 'server',
+            scoreMeters: 99,
+            savedAt: '2026-01-03T00:00:00.000Z',
+          },
+        ],
+      }),
+    });
+  });
+
   await openMenu(page);
 
   await page.evaluate(() => {
@@ -298,34 +326,47 @@ test('records button replaces the menu panel and shows ranked results', async ({
     node.children?.some((child) => child.children?.length === 112)
   );
   const recordsPanel = findPanel(openedNodes, 112);
-  const recordsTitle = findText(openedNodes, 'records');
-  const names = openedFlat.find((node) => node.text === '1.best\n2.abcdefghijklmnop');
-  const scores = openedFlat.find((node) => node.text === '30m\n20m');
+  const labels = openedFlat
+    .filter((node) => node.type === 'BitmapText')
+    .map((node) => node.text)
+    .filter((text): text is string => typeof text === 'string');
 
   expect(findPanel(openedNodes, 36)).toBeUndefined();
   expect(recordsContainer?.visible).toBe(true);
   expect(recordsPanel?.children).toHaveLength(112);
-  expect(recordsTitle).toMatchObject({
-    text: 'records',
-    x: 240,
-    y: 17,
-    fontSize: 14,
-    originX: 0.5,
-  });
-  expect(names).toMatchObject({
-    text: '1.best\n2.abcdefghijklmnop',
-    x: 24,
-    width: 252,
-    fontSize: 14,
-    lineSpacing: 2,
-    y: 47,
-  });
-  expect(scores).toMatchObject({ text: '30m\n20m', x: 428, width: 42, originX: 1 });
-  expect((scores?.x ?? 0) - (scores?.width ?? 0)).toBeGreaterThanOrEqual(
-    (names?.x ?? 0) + (names?.width ?? 0)
-  );
+  expect(labels).toEqual(expect.arrayContaining(['DEVICE', 'GLOBAL', 'BACK']));
 
-  const backPoint = await gamePoint(page, 240, 240);
+  const panelChildIndex = recordsContainer?.children?.findIndex(
+    (child) => child.children?.length === 112
+  );
+  const backLabelIndex = recordsContainer?.children?.findIndex((child) => child.text === 'BACK');
+  expect(panelChildIndex).toBeGreaterThanOrEqual(0);
+  expect(backLabelIndex).toBeGreaterThan(panelChildIndex!);
+  expect(findText(openedNodes, 'records')).toBeDefined();
+  expect(openedFlat.find((node) => node.text === '1.best\n2.abcdefghijklmnop')).toBeDefined();
+  expect(openedFlat.find((node) => node.text === '30m\n20m')).toBeDefined();
+
+  const globalPoint = await gamePoint(page, 240, 240);
+  await page.mouse.click(globalPoint.x, globalPoint.y);
+  await settleFrames(page, 5);
+
+  const globalNodes = await snapshotDisplay(page, MENU_SCENE);
+  const globalFlat = flattenDisplay(globalNodes);
+  expect(findText(globalNodes, 'global')).toBeDefined();
+  expect(globalFlat.find((node) => node.text === '1.server')).toBeDefined();
+  expect(globalFlat.find((node) => node.text === '99m')).toBeDefined();
+
+  const devicePoint = await gamePoint(page, 140, 240);
+  await page.mouse.click(devicePoint.x, devicePoint.y);
+  await settleFrames(page, 5);
+
+  const deviceNodes = await snapshotDisplay(page, MENU_SCENE);
+  expect(findText(deviceNodes, 'records')).toBeDefined();
+  expect(
+    flattenDisplay(deviceNodes).find((node) => node.text === '1.best\n2.abcdefghijklmnop')
+  ).toBeDefined();
+
+  const backPoint = await gamePoint(page, 340, 240);
   await page.mouse.click(backPoint.x, backPoint.y);
   await settleFrames(page, 5);
 

@@ -1,6 +1,6 @@
 import { GAME_HEIGHT, GAME_WIDTH } from './gameConstants.ts';
 import { getPanelBounds, PanelBounds } from './panelConfig.ts';
-import { getPaletteColor } from './palette.ts';
+import { PALETTE } from './palette.ts';
 
 export const SAVE_DIALOG_CONFIG = {
   depth: 300,
@@ -16,8 +16,8 @@ export const SAVE_DIALOG_CONFIG = {
     width: 246,
     height: 14,
     maxLength: 16,
-    color: getPaletteColor(10),
-    textColor: getPaletteColor(14),
+    color: PALETTE.green,
+    textColor: PALETTE.white,
     fontSize: 14,
     caretWidth: 14,
     caretHeight: 2,
@@ -26,7 +26,7 @@ export const SAVE_DIALOG_CONFIG = {
   button: {
     width: 96,
     padding: 16,
-    labelColor: getPaletteColor(14),
+    labelColor: PALETTE.white,
   },
 } as const;
 

@@ -1,5 +1,5 @@
 import { ASSET_KEYS } from './assetKeys.ts';
-import { getPaletteColor } from './palette.ts';
+import { PALETTE } from './palette.ts';
 
 export const PLAYER_CONFIG = {
   jumpVelocity: -270,
@@ -14,11 +14,11 @@ export const PLAYER_CONFIG = {
 };
 
 export const PLAYER_PALETTE = {
-  darkDirt: getPaletteColor(1),
-  dirt: getPaletteColor(4),
-  midDirt: getPaletteColor(8),
-  dust: getPaletteColor(9),
-  lightDirt: getPaletteColor(11),
+  darkDirt: PALETTE.shadow,
+  dirt: PALETTE.plum,
+  midDirt: PALETTE.teal,
+  dust: PALETTE.dustyRose,
+  lightDirt: PALETTE.sand,
 } as const;
 
 export const DASH_TEXTURE_KEY = ASSET_KEYS.texture.playerDash;

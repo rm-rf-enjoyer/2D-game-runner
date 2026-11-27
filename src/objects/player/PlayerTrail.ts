@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { getPaletteColor } from '../../config/palette.ts';
+import { PALETTE } from '../../config/palette.ts';
 
 interface TrailPoint {
   x: number;
@@ -7,7 +7,7 @@ interface TrailPoint {
 }
 
 const TRAIL_CONFIG = {
-  color: getPaletteColor(12),
+  color: PALETTE.orange,
   depth: 7,
   minPoints: 2,
   minThickness: 1,

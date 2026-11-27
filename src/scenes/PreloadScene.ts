@@ -47,7 +47,7 @@ import btnPressedLeft from '../assets/ui/buttons/4.png';
 import btnPressedCenter from '../assets/ui/buttons/5.png';
 import btnPressedRight from '../assets/ui/buttons/6.png';
 
-import { getPaletteColor } from '../config/palette.ts';
+import { PALETTE } from '../config/palette.ts';
 import { ASSET_KEYS } from '../config/assetKeys.ts';
 
 import runPng from '../assets/player/player.png';
@@ -73,14 +73,14 @@ const PRELOAD_CONFIG = {
     lineSpacing: 0,
   },
   particles: {
-    color: 0xffffff,
+    color: PALETTE.white,
     alpha: 1,
     pixel: { key: ASSET_KEYS.texture.pixel, width: 2, height: 2 },
     speedLine: { key: ASSET_KEYS.texture.speedLine, width: 16, height: 2 },
     fog: {
       key: ASSET_KEYS.texture.fanFog,
       size: 8,
-      colors: [getPaletteColor(8), getPaletteColor(9)],
+      colors: [PALETTE.dustyRose, PALETTE.sand],
     },
   },
 };

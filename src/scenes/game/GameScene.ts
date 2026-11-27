@@ -4,7 +4,7 @@ import { SCENE_KEYS } from '../../config/sceneKeys.ts';
 import { ASSET_KEYS } from '../../config/assetKeys.ts';
 import { EVENT_KEYS } from '../../config/eventKeys.ts';
 import { PLAYER_CONFIG, type DeathCause } from '../../config/playerConfig.ts';
-import { getPaletteColor } from '../../config/palette.ts';
+import { PALETTE } from '../../config/palette.ts';
 import { WorldManager } from '../../systems/WorldManager.ts';
 import { SceneMusic } from '../../systems/SceneMusic.ts';
 import { Rain } from '../../objects/Rain.ts';
@@ -21,8 +21,8 @@ import { InputRouter } from './InputRouter.ts';
 import { ScoreTracker } from './ScoreTracker.ts';
 import { GAME_MUSIC } from './config.ts';
 
-const BLOOD_COLORS = [getPaletteColor(6), getPaletteColor(5)];
-const SCORE_TINT_COLOR = getPaletteColor(14);
+const BLOOD_COLORS = [PALETTE.red, PALETTE.magenta];
+const SCORE_TINT_COLOR = PALETTE.white;
 const DEATH_SOUND_VOLUME = 0.6;
 
 export class GameScene extends Phaser.Scene {

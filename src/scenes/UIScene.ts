@@ -9,10 +9,10 @@ import { toggleSoundMuted } from '../utils/settings.ts';
 import { PauseMenuState } from '../systems/PauseMenuState.ts';
 import { SAVE_DIALOG_CONFIG, getSaveDialogPanelBounds } from '../config/saveDialogConfig.ts';
 import { getPanelBounds } from '../config/panelConfig.ts';
-import { saveResult } from '../utils/results.ts';
+import { getRecordsService } from '../services/records/recordsService.ts';
 
 const UI_SOUND_KEY = ASSET_KEYS.audio.ui;
-const SAVE_NAME_SYMBOLS = 'a-zA-Z0-9 .:,-';
+const SAVE_NAME_SYMBOLS = 'a-zA-Z0-9 _-';
 const SAVE_NAME_CLEAN_PATTERN = new RegExp(`[^${SAVE_NAME_SYMBOLS}]`, 'g');
 
 export class UIScene extends Phaser.Scene {
@@ -238,7 +238,8 @@ export class UIScene extends Phaser.Scene {
       return;
     }
 
-    saveResult(name, this.resultScore);
+    const scoreMeters = Number.parseInt(this.resultScore, 10);
+    getRecordsService().save(name, Number.isFinite(scoreMeters) ? scoreMeters : 0);
     this.backToMenu();
   }
 

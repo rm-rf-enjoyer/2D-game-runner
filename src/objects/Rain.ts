@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH, GAMEPLAY_CONFIG } from '../config/gameConfig.ts';
-import { getPaletteColor } from '../config/palette.ts';
+import { PALETTE } from '../config/palette.ts';
 
 interface Range {
   min: number;
@@ -42,6 +42,9 @@ interface RainSplash {
 
 export type RainPreset = 'game' | 'menu';
 
+const RAIN_PINK = PALETTE.magenta;
+const RAIN_SOFT_PINK = PALETTE.dustyRose;
+
 const RAIN_CONFIG = {
   margin: 24,
   respawnPadding: 40,
@@ -55,7 +58,7 @@ const RAIN_CONFIG = {
       driftFactor: 0.85,
       driftJitter: 55,
       alpha: 1,
-      colors: [getPaletteColor(2), getPaletteColor(8)],
+      colors: [PALETTE.steel, PALETTE.navy, RAIN_SOFT_PINK, RAIN_PINK],
     },
     {
       count: 15,
@@ -65,7 +68,7 @@ const RAIN_CONFIG = {
       driftFactor: 1.35,
       driftJitter: 95,
       alpha: 1,
-      colors: [getPaletteColor(3), getPaletteColor(8), getPaletteColor(9)],
+      colors: [PALETTE.steel, PALETTE.teal, PALETTE.cyan, RAIN_PINK],
     },
     {
       count: 4,
@@ -75,13 +78,14 @@ const RAIN_CONFIG = {
       driftFactor: 1.85,
       driftJitter: 130,
       alpha: 1,
-      colors: [getPaletteColor(8), getPaletteColor(11), getPaletteColor(15)],
+      colors: [PALETTE.teal, PALETTE.cyan, RAIN_SOFT_PINK, RAIN_PINK],
     },
   ] as RainLayerConfig[],
 };
 
 const SPLASH_CONFIG = {
-  bandHeight: 40,
+  impactOffset: 12,
+  bandHeight: 52,
   spawnChance: 0.06,
   extraChance: 0.35,
   poolSize: 48,
@@ -90,7 +94,7 @@ const SPLASH_CONFIG = {
   speedY: { min: -220, max: -50 },
   gravityY: 650,
   alpha: 1,
-  colors: [getPaletteColor(2), getPaletteColor(8), getPaletteColor(9), getPaletteColor(11)],
+  colors: [PALETTE.steel, PALETTE.teal, PALETTE.cyan, RAIN_SOFT_PINK, RAIN_PINK],
 };
 
 const PRESET_DEPTHS: Record<RainPreset, readonly number[]> = {
@@ -120,12 +124,13 @@ export class Rain {
   public update(delta: number, baseSpeed: number, isDashActive: boolean = false): void {
     const seconds = delta / GAMEPLAY_CONFIG.msPerSecond;
     const speedMultiplier = isDashActive ? RAIN_CONFIG.dashSpeedMultiplier : 1;
+    const impactY = GAME_HEIGHT - SPLASH_CONFIG.impactOffset;
 
     this.layers.forEach((layer, index) => {
       const drops = this.drops[index];
 
       drops.forEach((drop, dropIndex) => {
-        const wasAboveBottom = drop.y < GAME_HEIGHT;
+        const wasAboveImpact = drop.y < impactY;
         drop.velocityX =
           (baseSpeed * layer.driftFactor * (0.85 + 0.3 * drop.sizeRatio) + drop.drift) *
           speedMultiplier;
@@ -133,8 +138,8 @@ export class Rain {
         drop.y += drop.fallSpeed * seconds;
 
         if (
-          wasAboveBottom &&
-          drop.y >= GAME_HEIGHT &&
+          wasAboveImpact &&
+          drop.y >= impactY &&
           drop.x >= 0 &&
           drop.x <= GAME_WIDTH &&
           Phaser.Math.RND.frac() < SPLASH_CONFIG.spawnChance
@@ -166,7 +171,7 @@ export class Rain {
       life: 0,
       lifespan: 1,
       width: 1,
-      color: getPaletteColor(2),
+      color: PALETTE.steel,
     };
   }
 
@@ -174,7 +179,7 @@ export class Rain {
     const splash = this.splashes[this.splashCursor];
     this.splashCursor = (this.splashCursor + 1) % this.splashes.length;
     splash.x = x;
-    splash.y = GAME_HEIGHT - Phaser.Math.Between(1, 3);
+    splash.y = GAME_HEIGHT - SPLASH_CONFIG.impactOffset - Phaser.Math.Between(1, 3);
     splash.velocityX =
       Phaser.Math.FloatBetween(SPLASH_CONFIG.speedX.min, SPLASH_CONFIG.speedX.max) +
       baseSpeed * 0.15;

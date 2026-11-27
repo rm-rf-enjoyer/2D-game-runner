@@ -19,6 +19,12 @@ jobs:
       - run: npm run format:check
       - run: npm run typecheck
       - run: npm test
+      - run: npm ci --prefix backend
+      - run: npm --prefix backend run lint
+      - run: npm --prefix backend run format:check
+      - run: npm --prefix backend run typecheck
+      - run: npm --prefix backend test
+      - run: npm --prefix backend run test:integration
       - uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright

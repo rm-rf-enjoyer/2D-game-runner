@@ -1,13 +1,13 @@
 import Phaser from 'phaser';
 import { Button } from './Button.ts';
 import { getTextureSize } from '../utils/common.ts';
-import { getPaletteColor } from '../config/palette.ts';
+import { PALETTE } from '../config/palette.ts';
 import { ASSET_KEYS } from '../config/assetKeys.ts';
 
 const FONT_KEY = ASSET_KEYS.texture.font;
 const FONT_SIZE = 14;
 const BUTTON_WIDTH = 120;
-const LABEL_TINT = getPaletteColor(14);
+const LABEL_TINT = PALETTE.white;
 const DEPTH_BUTTON = 10;
 const DEPTH_LABEL = 11;
 

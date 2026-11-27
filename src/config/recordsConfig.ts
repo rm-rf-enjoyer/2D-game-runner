@@ -19,10 +19,13 @@ export const RECORDS_CONFIG = {
     maxRows: 10,
     maxNameLength: SAVE_DIALOG_CONFIG.field.maxLength,
   },
-  backButton: {
-    text: 'BACK',
-    width: 96,
+  buttons: {
+    width: 88,
+    gap: 12,
     bottomPadding: 24,
+    device: { text: 'DEVICE' },
+    global: { text: 'GLOBAL' },
+    back: { text: 'BACK' },
   },
 } as const;
 

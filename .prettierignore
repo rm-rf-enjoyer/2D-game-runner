@@ -3,3 +3,5 @@ dist
 android
 src/assets
 package-lock.json
+backend/drizzle
+backend/node_modules
